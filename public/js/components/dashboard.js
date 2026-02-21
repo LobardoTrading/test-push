@@ -13,9 +13,31 @@ const Dashboard = {
 
     _refreshInterval: null,
     _isOpen: false,
+    _collapsedSections: {},
 
     init() {
         console.log('📊 Dashboard.init()');
+        // Load collapsed state from localStorage
+        try {
+            const saved = localStorage.getItem('dashboardCollapsed');
+            if (saved) this._collapsedSections = JSON.parse(saved);
+        } catch (e) {}
+    },
+
+    toggleSection(sectionId) {
+        this._collapsedSections[sectionId] = !this._collapsedSections[sectionId];
+        try {
+            localStorage.setItem('dashboardCollapsed', JSON.stringify(this._collapsedSections));
+        } catch (e) {}
+
+        const section = document.querySelector(`[data-section="${sectionId}"]`);
+        if (section) {
+            section.classList.toggle('collapsed', this._collapsedSections[sectionId]);
+        }
+    },
+
+    _isSectionCollapsed(sectionId) {
+        return this._collapsedSections[sectionId] || false;
     },
 
     toggle() {
@@ -54,15 +76,155 @@ const Dashboard = {
 
         container.innerHTML = `
             ${this._renderOverview(globals, bots)}
-            <div class="dash-grid-2">
-                ${this._renderSystemHealth(riskData, autonomyData)}
-                ${this._renderAutonomy(autonomyData)}
-            </div>
-            ${this._renderSniper()}
-            ${this._renderLearningMonitor()}
-            ${this._renderBotGrid(bots, learningData)}
-            ${this._renderRecentActivity()}
+
+            ${this._renderCollapsibleSection('performance', '📈 Performance', this._renderPerformanceContent(bots, globals))}
+
+            ${this._renderCollapsibleSection('learning', '🧠 Learning Monitor', this._renderLearningContent())}
+
+            ${this._renderCollapsibleSection('market', '📊 Market Intelligence', this._renderMarketContent())}
+
+            ${this._renderCollapsibleSection('activity', '📋 Activity Feed', this._renderActivityContent())}
         `;
+
+        // Bind section toggle events
+        container.querySelectorAll('.dash-section-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const section = header.closest('.dash-section');
+                const sectionId = section?.dataset.section;
+                if (sectionId) this.toggleSection(sectionId);
+            });
+        });
+    },
+
+    _renderCollapsibleSection(id, title, content) {
+        const isCollapsed = this._isSectionCollapsed(id);
+        return `
+            <div class="dash-section ${isCollapsed ? 'collapsed' : ''}" data-section="${id}">
+                <div class="dash-section-header">
+                    <span>${title}</span>
+                    <span class="dash-section-toggle">▼</span>
+                </div>
+                <div class="dash-section-content">
+                    ${content}
+                </div>
+            </div>
+        `;
+    },
+
+    _renderPerformanceContent(bots, globals) {
+        const learningData = this._getLearningData(bots);
+        return `
+            <div class="dash-perf-grid">
+                <div class="dash-perf-stat">
+                    <div class="dash-perf-label">Win Rate</div>
+                    <div class="dash-perf-value ${parseInt(globals.wr) >= 50 ? 'up' : 'down'}">${globals.wr}%</div>
+                </div>
+                <div class="dash-perf-stat">
+                    <div class="dash-perf-label">Sharpe Ratio</div>
+                    <div class="dash-perf-value">${this._calcSharpe(bots)}</div>
+                </div>
+                <div class="dash-perf-stat">
+                    <div class="dash-perf-label">Sortino</div>
+                    <div class="dash-perf-value">${this._calcSortino(bots)}</div>
+                </div>
+                <div class="dash-perf-stat">
+                    <div class="dash-perf-label">Max Drawdown</div>
+                    <div class="dash-perf-value">${this._calcMaxDrawdown(bots)}%</div>
+                </div>
+            </div>
+            <div style="margin-top: 12px;">
+                ${this._renderBotGrid(bots, learningData)}
+            </div>
+        `;
+    },
+
+    _renderLearningContent() {
+        return this._renderLearningMonitor().replace(/<div class="dash-card[^>]*>.*?<div class="dash-card-title">.*?<\/div>/s, '').replace(/<\/div>$/, '');
+    },
+
+    _renderMarketContent() {
+        const intelligence = typeof Intelligence !== 'undefined' ? Intelligence.getMarketScore() : null;
+        if (!intelligence) {
+            return '<div style="color: var(--dim); font-size: 11px; text-align: center; padding: 20px;">Intelligence module loading...</div>';
+        }
+
+        return `
+            <div class="dash-market-grid">
+                <div class="dash-market-stat">
+                    <div class="dash-market-label">Market Score</div>
+                    <div class="dash-market-value">${intelligence.score || '--'}/100</div>
+                </div>
+                <div class="dash-market-stat">
+                    <div class="dash-market-label">Regime</div>
+                    <div class="dash-market-value">${intelligence.regime || '--'}</div>
+                </div>
+                <div class="dash-market-stat">
+                    <div class="dash-market-label">BTC Dominance</div>
+                    <div class="dash-market-value">${intelligence.btcDominance ? intelligence.btcDominance.toFixed(1) + '%' : '--'}</div>
+                </div>
+                <div class="dash-market-stat">
+                    <div class="dash-market-label">Fear & Greed</div>
+                    <div class="dash-market-value">${intelligence.fearGreed || '--'}</div>
+                </div>
+            </div>
+        `;
+    },
+
+    _renderActivityContent() {
+        if (typeof EventFeed === 'undefined') return '<div style="color: var(--dim); text-align: center;">No events</div>';
+
+        const events = (EventFeed._events || []).slice(0, 10);
+        if (events.length === 0) return '<div style="color: var(--dim); text-align: center;">No recent activity</div>';
+
+        return events.map(e => {
+            const time = new Date(e.timestamp).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            return `<div class="dash-event dash-event-${e.type}"><span class="dash-event-time">${time}</span><span class="dash-event-icon">${e.icon}</span><span class="dash-event-msg">${e.message}</span></div>`;
+        }).join('');
+    },
+
+    _calcSharpe(bots) {
+        const returns = [];
+        for (const bot of bots) {
+            const trades = bot.trades || [];
+            trades.forEach(t => {
+                if (t.pnl !== undefined) returns.push(t.pnl);
+            });
+        }
+        if (returns.length < 2) return '--';
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+        const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+        const std = Math.sqrt(variance);
+        if (std === 0) return '--';
+        return (mean / std * Math.sqrt(252)).toFixed(2);
+    },
+
+    _calcSortino(bots) {
+        const returns = [];
+        for (const bot of bots) {
+            const trades = bot.trades || [];
+            trades.forEach(t => {
+                if (t.pnl !== undefined) returns.push(t.pnl);
+            });
+        }
+        if (returns.length < 2) return '--';
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+        const downside = returns.filter(r => r < 0);
+        if (downside.length === 0) return '∞';
+        const dsVariance = downside.reduce((sum, r) => sum + Math.pow(r, 2), 0) / downside.length;
+        const dsStd = Math.sqrt(dsVariance);
+        if (dsStd === 0) return '∞';
+        return (mean / dsStd * Math.sqrt(252)).toFixed(2);
+    },
+
+    _calcMaxDrawdown(bots) {
+        let maxDD = 0;
+        for (const bot of bots) {
+            const initial = bot.initialBalance || bot.initialWallet || 100;
+            const current = bot.currentBalance || initial;
+            const dd = ((initial - current) / initial) * 100;
+            if (dd > maxDD) maxDD = dd;
+        }
+        return maxDD.toFixed(1);
     },
 
     // ═══════════════════════════════════════

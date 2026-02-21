@@ -48,13 +48,17 @@ const App = {
             if (typeof IndicatorsPro !== 'undefined') IndicatorsPro.init();
             if (typeof QuickStats !== 'undefined') QuickStats.init();
 
-            // UI Reorganization v5.0 - New components
+            // UI Reorganization v6.0 - New components
             if (typeof LiquidityHeatmap !== 'undefined') LiquidityHeatmap.init();
             if (typeof LearningStats !== 'undefined') LearningStats.init();
             if (typeof QuickPerformance !== 'undefined') QuickPerformance.init();
+            if (typeof Scanner !== 'undefined') Scanner.init();
             if (typeof EventFeed !== 'undefined' && EventFeed.startInlineUpdates) {
                 EventFeed.startInlineUpdates();
             }
+
+            // Render mode pills
+            this._renderModePills();
 
             // Initialize Intelligence system
             if (typeof Intelligence !== 'undefined') {
@@ -260,6 +264,42 @@ const App = {
                     posTab.click();
                 }
             }
+        });
+    },
+
+    _renderModePills() {
+        const container = document.querySelector('.mode-pills');
+        if (!container) return;
+
+        const modes = CONFIG.MODES || {
+            scalp: { name: 'Scalp', tf: '1m' },
+            intra: { name: 'Intra', tf: '15m' },
+            swing: { name: 'Swing', tf: '4h' },
+            position: { name: 'Position', tf: '1d' }
+        };
+
+        const currentMode = State.mode || 'intra';
+
+        container.innerHTML = Object.entries(modes).map(([key, mode]) => `
+            <button class="mode-pill ${key === currentMode ? 'active' : ''}"
+                    data-mode="${key}"
+                    title="${mode.name} (${mode.tf})">
+                ${mode.name}
+            </button>
+        `).join('');
+
+        container.querySelectorAll('.mode-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                const mode = pill.dataset.mode;
+                State.set('mode', mode);
+                const modeConfig = modes[mode];
+                if (modeConfig) {
+                    State.set('timeframe', modeConfig.tf);
+                }
+                container.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                Utils.showNotification(`Modo: ${modeConfig.name}`, 'info', 2000);
+            });
         });
     },
 

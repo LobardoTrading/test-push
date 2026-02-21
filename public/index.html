@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="TheRealShortShady — Premium Crypto Trading Terminal">
     <meta name="theme-color" content="#060911">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>TheRealShortShady · Terminal</title>
@@ -25,238 +25,346 @@
     <link rel="stylesheet" href="css/ui-enhancements.css">
     <link rel="stylesheet" href="css/theme-v5.css">
     <link rel="stylesheet" href="css/fixes-v43.css">
-    <link rel="stylesheet" href="css/ui-reorg.css">
+    <link rel="stylesheet" href="css/platform-v6.css">
 </head>
 <body>
 
     <div class="ambient-bg"></div>
     <div class="noise-overlay"></div>
 
-    <!-- Header -->
+    <!-- ═══════════════════════════════════════════════════════════
+         HEADER — Navigation & Account
+         ═══════════════════════════════════════════════════════════ -->
     <header class="header" id="header"></header>
 
-    <!-- Main Content -->
-    <main class="main">
+    <!-- ═══════════════════════════════════════════════════════════
+         MAIN TRADING INTERFACE
+         ═══════════════════════════════════════════════════════════ -->
+    <main class="main trading-layout">
 
-        <!-- Left Panel -->
-        <div class="panel left-panel">
-            <div class="left-tabs" role="tablist" aria-label="Paneles de navegación">
-                <button class="left-tab active" data-tab="watchlist" role="tab" aria-selected="true" aria-controls="tab-watchlist" id="tab-btn-watchlist">Markets</button>
-                <button class="left-tab" data-tab="positions" role="tab" aria-selected="false" aria-controls="tab-positions" id="tab-btn-positions">Posiciones</button>
-                <button class="left-tab" data-tab="activity" role="tab" aria-selected="false" aria-controls="tab-activity" id="tab-btn-activity">Activity</button>
+        <!-- LEFT SIDEBAR: Markets & Scanner -->
+        <aside class="sidebar sidebar-left">
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" data-tab="markets">Markets</button>
+                <button class="sidebar-tab" data-tab="scanner">Scanner</button>
             </div>
 
-            <!-- Markets Tab: Watchlist + Radar -->
-            <div class="left-tab-content active" id="tab-watchlist" role="tabpanel" aria-labelledby="tab-btn-watchlist">
+            <!-- Markets Tab -->
+            <div class="sidebar-content active" id="sidebar-markets">
+                <div class="market-search">
+                    <input type="text" id="marketSearch" placeholder="Buscar par..." class="search-input">
+                </div>
                 <div class="watchlist" id="watchlist"></div>
-                <div class="radar-section">
-                    <div class="radar-header">
-                        <div class="radar-title">
-                            <span class="panel-title-icon">🎯</span> Radar
-                        </div>
-                        <div class="radar-status" id="radarStatus">--</div>
-                    </div>
-                    <div class="radar-summary" id="radarSummary"></div>
-                    <div class="radar-list" id="radarList"></div>
-                </div>
             </div>
 
-            <!-- Positions Tab -->
-            <div class="left-tab-content" id="tab-positions" role="tabpanel" aria-labelledby="tab-btn-positions">
-                <div class="panel-title" id="positionsTitle">
-                    <span class="panel-title-icon">◈</span> Posiciones (0/3)
-                </div>
-                <div class="positions-container" id="positions"></div>
-            </div>
-
-            <!-- Activity Tab: Trade Log + Events -->
-            <div class="left-tab-content" id="tab-activity" role="tabpanel" aria-labelledby="tab-btn-activity">
-                <div class="panel-title">
-                    <span class="panel-title-icon">◈</span> Activity
-                </div>
-                <div class="activity-section">
-                    <div class="activity-subsection">
-                        <div class="activity-subtitle">📊 Trade Log</div>
-                        <div class="tradelog-container" id="tradeLog"></div>
+            <!-- Scanner Tab: Volatility & Opportunities -->
+            <div class="sidebar-content" id="sidebar-scanner">
+                <div class="scanner-section">
+                    <div class="scanner-header">
+                        <span>🔥 Alta Volatilidad</span>
+                        <button class="scanner-refresh" onclick="Scanner.refresh()">↻</button>
                     </div>
-                    <div class="activity-subsection">
-                        <div class="activity-subtitle">📋 Events</div>
-                        <div class="ef-container-inline" id="eventFeedInline"></div>
+                    <div class="scanner-list" id="scannerVolatility"></div>
+                </div>
+                <div class="scanner-section">
+                    <div class="scanner-header">
+                        <span>🆕 Nuevos Pares</span>
                     </div>
+                    <div class="scanner-list" id="scannerNew"></div>
+                </div>
+                <div class="scanner-section">
+                    <div class="scanner-header">
+                        <span>🎯 Oportunidades</span>
+                    </div>
+                    <div class="scanner-list" id="radarList"></div>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <!-- Center Panel - Chart & Actions -->
-        <div class="center-panel">
-            <div class="symbol-info">
-                <div class="symbol-main">
-                    <div class="symbol-name" id="symbolName">BTCUSDT</div>
-                    <div class="symbol-sector" id="symbolSector">Bitcoin · Store of Value · Grado A</div>
+        <!-- CENTER: Chart & Trading -->
+        <section class="main-content">
+            <!-- Symbol Header -->
+            <div class="trading-header">
+                <div class="symbol-info-compact">
+                    <span class="symbol-name" id="symbolName">BTCUSDT</span>
+                    <span class="symbol-price" id="currentPrice">$0.00</span>
+                    <span class="symbol-change" id="priceChange">0.00%</span>
                 </div>
-                <div class="symbol-price-group">
-                    <div class="current-price" id="currentPrice">$0.00</div>
-                    <div class="price-change up" id="priceChange">▲ 0.00%</div>
-                </div>
-                <div class="symbol-meta">
-                    <span id="symbolVolume" class="symbol-meta-item"></span>
-                    <span id="symbolRange" class="symbol-meta-item"></span>
-                </div>
-                <div class="tf-selector">
-                    <label>TF:</label>
-                    <select id="tfSelect">
+                <div class="trading-controls">
+                    <select id="tfSelect" class="tf-select">
                         <option value="1m">1m</option>
                         <option value="3m">3m</option>
                         <option value="5m">5m</option>
                         <option value="15m" selected>15m</option>
                         <option value="30m">30m</option>
                         <option value="1h">1h</option>
-                        <option value="2h">2h</option>
                         <option value="4h">4h</option>
-                        <option value="1d">1d</option>
-                        <option value="1w">1w</option>
+                        <option value="1d">1D</option>
                     </select>
+                    <div class="mode-pills" id="modePills"></div>
                 </div>
             </div>
 
-            <div class="chart-container">
-                <canvas id="chart"></canvas>
+            <!-- Chart Area with Liquidity -->
+            <div class="chart-area">
+                <div class="chart-main">
+                    <canvas id="chart"></canvas>
+                </div>
+                <div class="liquidity-sidebar" id="liquiditySidebar">
+                    <div class="liquidity-title">Liquidez</div>
+                    <div id="liquidityHeatmap"></div>
+                </div>
             </div>
 
+            <!-- Indicators Bar -->
             <div class="indicators-bar">
                 <div class="indicator-item"><span class="indicator-label">RSI</span><span class="indicator-value" id="indRSI">--</span></div>
                 <div class="indicator-item"><span class="indicator-label">EMA9</span><span class="indicator-value" id="indEMA9">--</span></div>
                 <div class="indicator-item"><span class="indicator-label">EMA21</span><span class="indicator-value" id="indEMA21">--</span></div>
-                <div class="indicator-item"><span class="indicator-label">ATR</span><span class="indicator-value" id="indATR">--</span></div>
                 <div class="indicator-item"><span class="indicator-label">MACD</span><span class="indicator-value" id="indMACD">--</span></div>
-                <div class="indicator-item"><span class="indicator-label">Stoch</span><span class="indicator-value" id="indStoch">--</span></div>
-                <div class="indicator-item"><span class="indicator-label">BB</span><span class="indicator-value" id="indBB">--</span></div>
                 <div class="indicator-item"><span class="indicator-label">Vol</span><span class="indicator-value" id="indVolRatio">--</span></div>
                 <div class="indicator-item"><span class="indicator-label">Trend</span><span class="indicator-value" id="indTrend">--</span></div>
-                <div class="indicator-item"><span class="indicator-label">Señal</span><span class="indicator-value" id="indSignal">--</span></div>
-                <div class="indicator-item"><span class="indicator-label">Diverg.</span><span class="indicator-value" id="indDivergence">--</span></div>
             </div>
 
-            <!-- Position Config Panel (Binance Futures style) -->
-            <div id="positionConfigPanel"></div>
-
-            <div class="actions-bar">
-                <button class="btn btn-analyze" id="btnAnalyze" title="Ctrl+Enter">
-                    <span class="btn-icon">⚡</span> Analizar
-                </button>
-                <button class="btn btn-long" id="btnLong" disabled>
-                    <span class="btn-icon">▲</span> LONG
-                </button>
-                <button class="btn btn-short" id="btnShort" disabled>
-                    <span class="btn-icon">▼</span> SHORT
-                </button>
-                <button class="btn btn-watcher" id="btnWatcher" title="Monitorear y entrar automáticamente">
-                    <span class="btn-icon">👁</span> <span id="btnWatcherText">Esperar</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Right Panel - Analysis + Learning + Liquidity -->
-        <div class="panel right-panel">
-            <div class="panel-title">
-                <span class="panel-title-icon">◈</span> Análisis
-            </div>
-            <div class="analysis-container" id="analysisPanel"></div>
-
-            <!-- Liquidity Heatmap Section -->
-            <div class="right-section" id="liquiditySection">
-                <div class="section-header">
-                    <span>🔥 Liquidity Heatmap</span>
+            <!-- Trading Panel (Binance Futures Style) -->
+            <div class="trading-panel">
+                <div class="trading-panel-left">
+                    <!-- Analysis Summary -->
+                    <div class="analysis-mini" id="analysisMini">
+                        <button class="btn btn-analyze" id="btnAnalyze">
+                            <span>⚡</span> Analizar
+                        </button>
+                        <div class="analysis-result" id="analysisResult"></div>
+                    </div>
                 </div>
-                <div id="liquidityHeatmap"></div>
+                <div class="trading-panel-center">
+                    <!-- Order Entry -->
+                    <div class="order-entry">
+                        <div class="order-inputs">
+                            <div class="input-group">
+                                <label>Margen</label>
+                                <input type="number" id="orderMargin" value="100" min="5">
+                                <span class="input-suffix">USDT</span>
+                            </div>
+                            <div class="input-group">
+                                <label>Leverage</label>
+                                <select id="orderLeverage">
+                                    <option value="5">5x</option>
+                                    <option value="10">10x</option>
+                                    <option value="20" selected>20x</option>
+                                    <option value="50">50x</option>
+                                    <option value="75">75x</option>
+                                    <option value="100">100x</option>
+                                    <option value="125">125x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="order-buttons">
+                            <button class="btn btn-long" id="btnLong" disabled>
+                                <span>▲</span> LONG
+                            </button>
+                            <button class="btn btn-short" id="btnShort" disabled>
+                                <span>▼</span> SHORT
+                            </button>
+                        </div>
+                        <div class="order-info">
+                            <span>TP: <b id="orderTP">--</b></span>
+                            <span>SL: <b id="orderSL">--</b></span>
+                            <span>R:R: <b id="orderRR">--</b></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="trading-panel-right">
+                    <!-- Quick Stats -->
+                    <div class="quick-stats-mini">
+                        <div class="stat-item">
+                            <span class="stat-label">Win Rate</span>
+                            <span class="stat-value" id="statWinRate">--%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Trades</span>
+                            <span class="stat-value" id="statTrades">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">P&L</span>
+                            <span class="stat-value" id="statPnL">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT SIDEBAR: Analysis & Positions -->
+        <aside class="sidebar sidebar-right">
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" data-tab="analysis">Análisis</button>
+                <button class="sidebar-tab" data-tab="positions">Posiciones</button>
+                <button class="sidebar-tab" data-tab="activity">Activity</button>
             </div>
 
-            <!-- Learning Stats Section -->
-            <div class="right-section" id="learningSection">
-                <div class="section-header">
-                    <span>🧠 Learning Stats</span>
-                </div>
-                <div id="learningStats"></div>
+            <!-- Analysis Tab -->
+            <div class="sidebar-content active" id="sidebar-analysis">
+                <div class="analysis-container" id="analysisPanel"></div>
             </div>
 
-            <!-- Quick Performance Section -->
-            <div class="right-section" id="performanceSection">
-                <div class="section-header">
-                    <span>📈 Performance</span>
+            <!-- Positions Tab -->
+            <div class="sidebar-content" id="sidebar-positions">
+                <div class="positions-header">
+                    <span id="positionsTitle">Posiciones (0/3)</span>
                 </div>
-                <div id="quickPerformance"></div>
+                <div class="positions-container" id="positions"></div>
             </div>
-        </div>
+
+            <!-- Activity Tab -->
+            <div class="sidebar-content" id="sidebar-activity">
+                <div class="activity-section">
+                    <div class="activity-header">Trade Log</div>
+                    <div class="tradelog-container" id="tradeLog"></div>
+                </div>
+                <div class="activity-section">
+                    <div class="activity-header">Events</div>
+                    <div class="ef-container-inline" id="eventFeedInline"></div>
+                </div>
+            </div>
+        </aside>
 
     </main>
 
-    <!-- Dashboard Cockpit -->
+    <!-- ═══════════════════════════════════════════════════════════
+         COCKPIT — Analytics Dashboard (Collapsible Sections)
+         ═══════════════════════════════════════════════════════════ -->
     <div class="dashboard-overlay" id="dashboardOverlay">
-        <div class="dash-header">
-            <div class="dash-header-left">
-                <div class="dash-header-title">⚡ Cockpit</div>
-                <div class="dash-header-sub">TheRealShortShady</div>
+        <div class="dash-container">
+            <div class="dash-header">
+                <div class="dash-header-left">
+                    <div class="dash-header-title">📊 Cockpit</div>
+                </div>
+                <button class="dash-close" onclick="Dashboard.close()">✕</button>
             </div>
-            <button class="dash-close" onclick="Dashboard.close()">✕</button>
+            <div class="dash-body">
+                <!-- Performance Section -->
+                <div class="dash-section" id="dashPerformance">
+                    <div class="dash-section-header" onclick="Dashboard.toggleSection('performance')">
+                        <span>📈 Performance</span>
+                        <span class="dash-section-toggle">▼</span>
+                    </div>
+                    <div class="dash-section-content" id="dashPerformanceContent"></div>
+                </div>
+
+                <!-- Learning Section -->
+                <div class="dash-section" id="dashLearning">
+                    <div class="dash-section-header" onclick="Dashboard.toggleSection('learning')">
+                        <span>🧠 Learning Engine</span>
+                        <span class="dash-section-toggle">▼</span>
+                    </div>
+                    <div class="dash-section-content" id="dashLearningContent"></div>
+                </div>
+
+                <!-- Market Analysis Section -->
+                <div class="dash-section" id="dashMarket">
+                    <div class="dash-section-header" onclick="Dashboard.toggleSection('market')">
+                        <span>🌍 Market Overview</span>
+                        <span class="dash-section-toggle">▼</span>
+                    </div>
+                    <div class="dash-section-content" id="dashMarketContent"></div>
+                </div>
+
+                <!-- Recent Activity Section -->
+                <div class="dash-section" id="dashActivity">
+                    <div class="dash-section-header" onclick="Dashboard.toggleSection('activity')">
+                        <span>📋 Recent Activity</span>
+                        <span class="dash-section-toggle">▼</span>
+                    </div>
+                    <div class="dash-section-content" id="dashActivityContent"></div>
+                </div>
+            </div>
         </div>
-        <div class="dash-content" id="dashboardContent"></div>
     </div>
 
-    <!-- LAB Modal -->
+    <!-- ═══════════════════════════════════════════════════════════
+         LAB — Autonomous Trading Laboratory
+         ═══════════════════════════════════════════════════════════ -->
     <div class="lab-overlay" id="labOverlay">
         <div class="lab-container">
             <div class="lab-header">
-                <div class="lab-title">🧪 LAB — Centro de Automatización</div>
+                <div class="lab-title">🧪 LAB — Trading Laboratory</div>
                 <button class="lab-close" onclick="Lab.close()">✕</button>
             </div>
 
-            <!-- Autonomy Bot Section -->
-            <div class="lab-autonomy-section" id="labAutonomySection">
-                <div class="lab-autonomy-header">
-                    <div class="lab-autonomy-title">
-                        <span>🎛️ Autonomy Bot</span>
-                        <span class="autonomy-status" id="autonomyStatus">INACTIVO</span>
+            <div class="lab-body">
+                <!-- Autonomy Control Panel -->
+                <div class="lab-section lab-autonomy">
+                    <div class="lab-section-header">
+                        <span>🎛️ Autonomy Controller</span>
+                        <div class="autonomy-master-switch">
+                            <span class="autonomy-status" id="autonomyStatus">OFF</span>
+                            <button class="btn-autonomy" id="btnAutonomyToggle" onclick="Lab.toggleAutonomy()">
+                                Iniciar
+                            </button>
+                        </div>
                     </div>
-                    <div class="lab-autonomy-controls">
-                        <button class="btn-autonomy" id="btnAutonomyToggle" onclick="Lab.toggleAutonomy()">
-                            ▶ Iniciar
-                        </button>
+                    <div class="lab-section-content">
+                        <div class="autonomy-config">
+                            <div class="config-row">
+                                <label>Modo</label>
+                                <select id="autonomyMode" onchange="Lab.setAutonomyMode(this.value)">
+                                    <option value="conservative">🧊 Conservador</option>
+                                    <option value="moderate" selected>⚡ Moderado</option>
+                                    <option value="aggressive">🔥 Agresivo</option>
+                                </select>
+                            </div>
+                            <div class="config-row">
+                                <label>Max Bots Activos</label>
+                                <input type="number" id="autonomyMaxBots" value="5" min="1" max="20">
+                            </div>
+                            <div class="config-row">
+                                <label>Auto-crear Bots</label>
+                                <input type="checkbox" id="autonomyAutoCreate" checked>
+                            </div>
+                        </div>
+                        <div class="autonomy-stats" id="autonomyStatsPanel"></div>
                     </div>
                 </div>
-                <div class="lab-autonomy-body">
-                    <div class="autonomy-mode-selector">
-                        <label>Modo:</label>
-                        <select id="autonomyModeSelect" onchange="Lab.setAutonomyMode(this.value)">
-                            <option value="conservative">🧊 Conservador</option>
-                            <option value="moderate" selected>⚡ Moderado</option>
-                            <option value="aggressive">🔥 Agresivo</option>
-                        </select>
+
+                <!-- Active Bots -->
+                <div class="lab-section lab-bots">
+                    <div class="lab-section-header">
+                        <span>🤖 Bots Activos</span>
+                        <button class="btn btn-sm" onclick="Lab.showCreateModal()">+ Nuevo</button>
                     </div>
-                    <div class="autonomy-stats" id="autonomyStats">
-                        <span>Fitness: --</span>
-                        <span>Bots activos: 0</span>
+                    <div class="lab-section-content">
+                        <div class="lab-global-stats" id="labGlobalStats"></div>
+                        <div class="lab-bots-grid" id="labBotsGrid"></div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Lab Bots Section -->
-            <div class="lab-toolbar">
-                <button class="btn btn-analyze" onclick="Lab.showCreateModal()" style="padding:8px 16px; font-size:11px;">
-                    + Nuevo Bot
-                </button>
-                <div class="lab-global-stats" id="labGlobalStats"></div>
-            </div>
-            <div class="lab-bots-grid" id="labBotsGrid"></div>
+                <!-- MasterBots -->
+                <div class="lab-section lab-masters">
+                    <div class="lab-section-header">
+                        <span>🏆 MasterBots</span>
+                        <span class="masters-count" id="mastersCount">0</span>
+                    </div>
+                    <div class="lab-section-content">
+                        <div class="lab-masters-grid" id="labMastersGrid"></div>
+                    </div>
+                </div>
 
-            <!-- MasterBots Section -->
-            <div class="lab-masters-section" id="labMastersSection">
-                <div class="lab-masters-header">🏆 MasterBots</div>
-                <div class="lab-masters-grid" id="labMastersGrid"></div>
+                <!-- Learning & Data -->
+                <div class="lab-section lab-learning">
+                    <div class="lab-section-header">
+                        <span>📊 Learning & Data</span>
+                    </div>
+                    <div class="lab-section-content">
+                        <div class="learning-stats-full" id="labLearningStats"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- ═══════════════════════════════════════════════════════════
+         SETTINGS MODAL
+         ═══════════════════════════════════════════════════════════ -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <div class="modal-header">
@@ -265,76 +373,64 @@
             </div>
             <div class="modal-body">
                 <!-- Trading Settings -->
-                <div class="settings-section-title">Trading</div>
-                <div class="setting-group">
-                    <label class="setting-label">Tamaño de Wallet (USDT)</label>
-                    <input type="number" id="settingWalletSize" class="setting-input" min="100" max="10000000" step="100" value="10000">
-                    <span class="setting-hint">Balance inicial para paper trading</span>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Máximo de Posiciones</label>
-                    <select id="settingMaxPositions" class="setting-input">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3" selected>3</option>
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Refresh Rate</label>
-                    <select id="settingRefreshRate" class="setting-input">
-                        <option value="1s">1s — Ultra rápido</option>
-                        <option value="2s">2s — Rápido</option>
-                        <option value="5s" selected>5s — Normal</option>
-                        <option value="10s">10s — Moderado</option>
-                        <option value="30s">30s — Lento</option>
-                        <option value="1m">1m — Muy lento</option>
-                        <option value="5m">5m — Mínimo</option>
-                        <option value="15m">15m — Bajo consumo</option>
-                        <option value="1h">1h — Background</option>
-                    </select>
-                    <span class="setting-hint">Frecuencia de actualización de precios y velas</span>
+                <div class="settings-section">
+                    <div class="settings-section-title">Trading</div>
+                    <div class="setting-group">
+                        <label class="setting-label">Wallet (USDT)</label>
+                        <input type="number" id="settingWalletSize" class="setting-input" min="100" max="10000000" step="100" value="10000">
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Max Posiciones</label>
+                        <select id="settingMaxPositions" class="setting-input">
+                            <option value="1">1</option>
+                            <option value="3" selected>3</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Refresh Rate</label>
+                        <select id="settingRefreshRate" class="setting-input">
+                            <option value="1s">1s</option>
+                            <option value="5s" selected>5s</option>
+                            <option value="10s">10s</option>
+                            <option value="30s">30s</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Risk Manager Settings -->
-                <div class="settings-section-title">Risk Manager</div>
-                <div class="setting-group">
-                    <label class="setting-label">Max Daily Loss (%)</label>
-                    <input type="number" id="settingMaxDailyLoss" class="setting-input" min="1" max="50" step="1" value="5">
-                    <span class="setting-hint">Pausa bots si se pierde este % en un día</span>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Max Drawdown (%)</label>
-                    <input type="number" id="settingMaxDrawdown" class="setting-input" min="5" max="50" step="1" value="15">
-                    <span class="setting-hint">Cierra todo si se alcanza este drawdown</span>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Max Consecutive Losses</label>
-                    <input type="number" id="settingMaxConsecLosses" class="setting-input" min="2" max="20" step="1" value="5">
-                    <span class="setting-hint">Cooldown después de X pérdidas seguidas</span>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Cooldown (minutos)</label>
-                    <input type="number" id="settingCooldown" class="setting-input" min="5" max="120" step="5" value="30">
-                    <span class="setting-hint">Tiempo de pausa después de consecutive losses</span>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Max Position Size (%)</label>
-                    <input type="number" id="settingMaxPositionPct" class="setting-input" min="5" max="100" step="5" value="25">
-                    <span class="setting-hint">Máximo % del wallet por posición</span>
+                <div class="settings-section">
+                    <div class="settings-section-title">Risk Manager</div>
+                    <div class="setting-group">
+                        <label class="setting-label">Max Daily Loss (%)</label>
+                        <input type="number" id="settingMaxDailyLoss" class="setting-input" min="1" max="50" value="5">
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Max Drawdown (%)</label>
+                        <input type="number" id="settingMaxDrawdown" class="setting-input" min="5" max="50" value="15">
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Max Consecutive Losses</label>
+                        <input type="number" id="settingMaxConsecLosses" class="setting-input" min="2" max="20" value="5">
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Cooldown (min)</label>
+                        <input type="number" id="settingCooldown" class="setting-input" min="5" max="120" value="30">
+                    </div>
                 </div>
 
                 <div class="setting-actions">
-                    <button class="btn btn-analyze" onclick="SettingsModal.apply()">Aplicar</button>
-                    <button class="btn btn-short" onclick="SettingsModal.resetWallet()" style="flex:none; width:auto; padding:11px 20px;">Reset Wallet</button>
-                    <button class="btn btn-short" onclick="SettingsModal.clearHistory()" style="flex:none; width:auto; padding:11px 20px;">Borrar Log</button>
+                    <button class="btn btn-analyze" onclick="SettingsModal.apply()">Guardar</button>
+                    <button class="btn btn-secondary" onclick="SettingsModal.resetWallet()">Reset Wallet</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts (ordered for dependencies) -->
+    <!-- ═══════════════════════════════════════════════════════════
+         SCRIPTS
+         ═══════════════════════════════════════════════════════════ -->
     <script src="js/config.js"></script>
     <script src="js/utils/formatters.js"></script>
     <script src="js/db.js"></script>
@@ -366,6 +462,7 @@
     <script src="js/components/liquidity-heatmap.js"></script>
     <script src="js/components/learning-stats.js"></script>
     <script src="js/components/quick-performance.js"></script>
+    <script src="js/components/scanner.js"></script>
     <script src="js/components/dashboard.js"></script>
     <script src="js/app.js"></script>
 </body>

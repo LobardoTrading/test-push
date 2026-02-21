@@ -389,9 +389,10 @@ const Lab = {
             displayBots.forEach(bot => this._drawSparkline(bot));
         });
 
-        // Update Autonomy UI and MasterBots
+        // Update Autonomy UI, MasterBots and Learning Stats
         this._updateAutonomyUI();
         this._renderMasterBots();
+        this._renderLearningStats();
     },
 
     toggleArchived() {
@@ -1819,5 +1820,112 @@ const Lab = {
                 </div>
             </div>
         `).join('');
+    },
+
+    // ═══════════════════════════════════════
+    // LEARNING & DATA RENDERING
+    // ═══════════════════════════════════════
+
+    _renderLearningStats() {
+        const container = document.getElementById('labLearningStats');
+        if (!container) return;
+
+        const bots = this._getBots();
+        let dbStatsHTML = '';
+        let effectivenessHTML = '';
+        let patternsHTML = '';
+
+        // TradeDB Stats
+        if (typeof TradeDB !== 'undefined' && TradeDB._ready) {
+            TradeDB.getDBStats().then(stats => {
+                const dbEl = document.getElementById('labDbStats');
+                if (dbEl && stats) {
+                    dbEl.innerHTML = `
+                        <div class="learning-stat">
+                            <span class="learning-stat-label">Total Trades</span>
+                            <span class="learning-stat-value">${stats.totalTrades || 0}</span>
+                        </div>
+                        <div class="learning-stat">
+                            <span class="learning-stat-label">Last 30 Days</span>
+                            <span class="learning-stat-value">${stats.last30DaysTrades || 0}</span>
+                        </div>
+                        <div class="learning-stat">
+                            <span class="learning-stat-label">Unique Symbols</span>
+                            <span class="learning-stat-value">${stats.uniqueSymbols || 0}</span>
+                        </div>
+                        <div class="learning-stat">
+                            <span class="learning-stat-label">Unique Bots</span>
+                            <span class="learning-stat-value">${stats.uniqueBots || 0}</span>
+                        </div>
+                    `;
+                }
+            }).catch(() => {});
+            dbStatsHTML = '<div class="learning-stats-grid" id="labDbStats"><div style="color:var(--dim)">Loading...</div></div>';
+        } else {
+            dbStatsHTML = '<div class="learning-stats-grid"><div style="color:var(--dim)">TradeDB not available</div></div>';
+        }
+
+        // Learning Effectiveness
+        if (typeof LearningEngine !== 'undefined') {
+            const effectiveness = LearningEngine.getEffectiveness();
+            if (effectiveness) {
+                effectivenessHTML = `
+                    <div class="learning-effectiveness">
+                        <div class="learning-eff-status ${effectiveness.isEffective ? 'effective' : 'neutral'}">
+                            ${effectiveness.isEffective ? '✅ Effective' : '⚠️ Neutral'}
+                        </div>
+                        <div class="learning-eff-grid">
+                            <div class="learning-stat">
+                                <span class="learning-stat-label">Blocked</span>
+                                <span class="learning-stat-value">${effectiveness.blocked} <small>(${effectiveness.blockedAccuracy})</small></span>
+                            </div>
+                            <div class="learning-stat">
+                                <span class="learning-stat-label">Allowed</span>
+                                <span class="learning-stat-value">${effectiveness.allowed} <small>(${effectiveness.allowedWinRate})</small></span>
+                            </div>
+                        </div>
+                        <div class="learning-eff-interpretation">${effectiveness.interpretation || ''}</div>
+                    </div>
+                `;
+            } else {
+                effectivenessHTML = '<div style="color:var(--dim); font-size:11px; text-align:center; padding:10px;">Collecting data... (need 20+ evaluations)</div>';
+            }
+
+            // Patterns from all bots
+            const allPatterns = new Set();
+            bots.forEach(bot => {
+                try {
+                    const report = LearningEngine.getReport(bot);
+                    if (report.patterns) {
+                        report.patterns.forEach(p => allPatterns.add(p));
+                    }
+                } catch (e) {}
+            });
+
+            if (allPatterns.size > 0) {
+                patternsHTML = `
+                    <div class="learning-patterns">
+                        <div class="learning-patterns-title">🔍 Detected Patterns</div>
+                        <div class="learning-patterns-list">
+                            ${Array.from(allPatterns).slice(0, 10).map(p => `<span class="pattern-tag">${p}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            effectivenessHTML = '<div style="color:var(--dim); text-align:center;">LearningEngine not available</div>';
+        }
+
+        container.innerHTML = `
+            <div class="learning-section">
+                <div class="learning-section-title">📦 TradeDB Storage</div>
+                ${dbStatsHTML}
+            </div>
+            <div class="learning-section">
+                <div class="learning-section-title">🎯 Filter Effectiveness</div>
+                ${effectivenessHTML}
+            </div>
+            ${patternsHTML}
+        `;
     }
 };
