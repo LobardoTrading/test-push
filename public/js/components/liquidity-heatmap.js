@@ -219,8 +219,7 @@ const LiquidityHeatmap = {
         if (this._updateInterval) {
             clearInterval(this._updateInterval);
         }
-    }
-};
+    },
 
     /** Get liquidity data for analysis integration */
     async getLiquidityAnalysis() {
