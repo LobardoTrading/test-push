@@ -21,7 +21,7 @@ const LiquidityHeatmap = {
     },
 
     async update() {
-        const symbol = State.get().currentSymbol || 'BTCUSDT';
+        const symbol = (State.symbol || 'BTC') + 'USDT';
         const now = Date.now();
 
         // Use cache if valid
@@ -54,7 +54,7 @@ const LiquidityHeatmap = {
         const asks = raw.asks || [];
 
         // Get current price from state
-        const currentPrice = State.get().currentPrice || parseFloat(bids[0]?.[0] || 0);
+        const currentPrice = State.prices?.[State.symbol]?.price || parseFloat(bids[0]?.[0] || 0);
 
         // Aggregate into price zones (0.5% bands)
         const zoneSize = currentPrice * 0.005;
@@ -223,7 +223,7 @@ const LiquidityHeatmap = {
 
     /** Get liquidity data for analysis integration */
     async getLiquidityAnalysis() {
-        const symbol = State.get().currentSymbol || 'BTCUSDT';
+        const symbol = (State.symbol || 'BTC') + 'USDT';
         const now = Date.now();
 
         // Use cache if valid

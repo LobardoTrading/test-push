@@ -164,10 +164,9 @@ const BotsPanel = {
     },
 
     _renderQuickStats() {
-        const state = State.get();
-        const positions = state.positions || [];
-        const balance = state.wallet?.balance || 10000;
-        const totalPnl = state.wallet?.totalPnl || 0;
+        const positions = State.positions || [];
+        const balance = State.balance || 10000;
+        const totalPnl = State.totalPnl || 0;
 
         return `
             <div class="bots-stat-item">

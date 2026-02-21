@@ -116,7 +116,7 @@ const QuickPerformance = {
             let runningBalance = 0;
             let maxDD = 0;
 
-            const wallet = State.get().wallet || {};
+            const wallet = { balance: State.balance, initialBalance: CONFIG?.TRADING?.DEFAULT_BALANCE || 10000 };
             const initialBalance = wallet.initialBalance || 10000;
             runningBalance = initialBalance;
             peak = initialBalance;
