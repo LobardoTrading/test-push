@@ -23,6 +23,22 @@ const SettingsModal = {
             refreshInput.value = saved || '5s';
         }
 
+        // Pre-fill Risk Manager settings
+        if (typeof RiskManager !== 'undefined') {
+            const cfg = RiskManager._config;
+            const fields = {
+                'settingMaxDailyLoss': cfg.maxDailyLossPct,
+                'settingMaxDrawdown': cfg.maxDrawdownPct,
+                'settingMaxConsecLosses': cfg.maxConsecutiveLosses,
+                'settingCooldown': cfg.cooldownMinutes,
+                'settingMaxPositionPct': cfg.maxPositionPct
+            };
+            for (const [id, val] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            }
+        }
+
         modal.classList.add('active');
     },
 
@@ -61,6 +77,24 @@ const SettingsModal = {
                 State._store(CONFIG.STORAGE.REFRESH, selected);
                 DataService.setRefreshRate(option.prices, option.candles);
                 Utils.showNotification(`Refresh: ${selected}`, 'info', 2000);
+            }
+        }
+
+        // Apply Risk Manager settings
+        if (typeof RiskManager !== 'undefined') {
+            const riskFields = {
+                'settingMaxDailyLoss': 'maxDailyLossPct',
+                'settingMaxDrawdown': 'maxDrawdownPct',
+                'settingMaxConsecLosses': 'maxConsecutiveLosses',
+                'settingCooldown': 'cooldownMinutes',
+                'settingMaxPositionPct': 'maxPositionPct'
+            };
+            for (const [id, key] of Object.entries(riskFields)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    const val = parseFloat(el.value);
+                    if (!isNaN(val)) RiskManager.setConfig(key, val);
+                }
             }
         }
 

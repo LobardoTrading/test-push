@@ -388,6 +388,10 @@ const Lab = {
         requestAnimationFrame(() => {
             displayBots.forEach(bot => this._drawSparkline(bot));
         });
+
+        // Update Autonomy UI and MasterBots
+        this._updateAutonomyUI();
+        this._renderMasterBots();
     },
 
     toggleArchived() {
@@ -1713,5 +1717,107 @@ const Lab = {
     _renderIfOpen() {
         const overlay = document.getElementById('labOverlay');
         if (overlay && overlay.classList.contains('active')) this.render();
+    },
+
+    // ═══════════════════════════════════════
+    // AUTONOMY BOT INTEGRATION
+    // ═══════════════════════════════════════
+
+    toggleAutonomy() {
+        if (typeof AutonomyBot === 'undefined') {
+            Utils.showNotification('AutonomyBot no disponible', 'error');
+            return;
+        }
+
+        if (AutonomyBot._running) {
+            AutonomyBot.stop();
+        } else {
+            AutonomyBot.start();
+        }
+
+        this._updateAutonomyUI();
+    },
+
+    setAutonomyMode(mode) {
+        if (typeof AutonomyBot === 'undefined') return;
+        AutonomyBot._currentMode = mode;
+        this._updateAutonomyUI();
+    },
+
+    _updateAutonomyUI() {
+        const statusEl = document.getElementById('autonomyStatus');
+        const btnEl = document.getElementById('btnAutonomyToggle');
+        const statsEl = document.getElementById('autonomyStats');
+        const modeSelect = document.getElementById('autonomyModeSelect');
+
+        if (typeof AutonomyBot === 'undefined') return;
+
+        const running = AutonomyBot._running || false;
+        const mode = AutonomyBot._currentMode || 'moderate';
+        const fitness = AutonomyBot._lastFitness || 0;
+        const activeBots = this._getBots().filter(b => b.status === 'running').length;
+
+        if (statusEl) {
+            statusEl.textContent = running ? 'ACTIVO' : 'INACTIVO';
+            statusEl.className = 'autonomy-status ' + (running ? 'active' : 'inactive');
+        }
+
+        if (btnEl) {
+            btnEl.textContent = running ? '⏹ Detener' : '▶ Iniciar';
+            btnEl.className = 'btn-autonomy' + (running ? ' running' : '');
+        }
+
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <span>Fitness: <b>${fitness.toFixed(1)}</b></span>
+                <span>Bots activos: <b>${activeBots}</b></span>
+            `;
+        }
+
+        if (modeSelect) {
+            modeSelect.value = mode;
+        }
+    },
+
+    // ═══════════════════════════════════════
+    // MASTERBOTS RENDERING
+    // ═══════════════════════════════════════
+
+    _renderMasterBots() {
+        const grid = document.getElementById('labMastersGrid');
+        if (!grid) return;
+
+        if (typeof MasterBots === 'undefined' || !MasterBots._masters || MasterBots._masters.length === 0) {
+            grid.innerHTML = '<div class="lab-empty" style="padding:20px; text-align:center; color:var(--dim); font-size:11px;">Sin MasterBots aún. Los bots con buen rendimiento se promueven automáticamente.</div>';
+            return;
+        }
+
+        grid.innerHTML = MasterBots._masters.map(m => `
+            <div class="master-card">
+                <div class="master-card-header">
+                    <span class="master-card-name">🏆 ${m.name || m.id}</span>
+                </div>
+                <div class="master-card-stats">
+                    <div class="master-stat">
+                        <span class="master-stat-label">Win Rate</span>
+                        <span class="master-stat-value" style="color:var(--green)">${((m.winRate || 0) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="master-stat">
+                        <span class="master-stat-label">Trades</span>
+                        <span class="master-stat-value">${m.trades || 0}</span>
+                    </div>
+                    <div class="master-stat">
+                        <span class="master-stat-label">PnL</span>
+                        <span class="master-stat-value" style="color:${(m.totalPnl || 0) >= 0 ? 'var(--green)' : 'var(--red)'}">
+                            ${(m.totalPnl || 0) >= 0 ? '+' : ''}$${(m.totalPnl || 0).toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="master-stat">
+                        <span class="master-stat-label">P.Factor</span>
+                        <span class="master-stat-value">${(m.profitFactor || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 };

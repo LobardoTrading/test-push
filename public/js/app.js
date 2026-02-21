@@ -49,7 +49,6 @@ const App = {
             if (typeof QuickStats !== 'undefined') QuickStats.init();
 
             // UI Reorganization v5.0 - New components
-            if (typeof BotsPanel !== 'undefined') BotsPanel.init();
             if (typeof LiquidityHeatmap !== 'undefined') LiquidityHeatmap.init();
             if (typeof LearningStats !== 'undefined') LearningStats.init();
             if (typeof QuickPerformance !== 'undefined') QuickPerformance.init();
@@ -118,14 +117,7 @@ const App = {
                 State.subscribe('prices', () => Trading.renderPositionConfig());
                 State.subscribe('balance', () => Trading.renderPositionConfig());
             }
-            if (typeof RiskManager !== 'undefined' && RiskManager.renderManualRiskPanel) {
-                RiskManager.renderManualRiskPanel();
-                // Re-render on position/price changes
-                State.subscribe('positions', () => RiskManager.renderManualRiskPanel());
-                State.subscribe('prices', () => {
-                    if (State.positions.length > 0) RiskManager.renderManualRiskPanel();
-                });
-            }
+            // Risk Manager is now in Settings modal
             this._showLoading(false);
 
             console.log('✅ Application initialized successfully');
@@ -258,7 +250,6 @@ const App = {
                     if (typeof TradeLog !== 'undefined') TradeLog.render();
                     if (typeof EventFeed !== 'undefined') EventFeed.renderInline();
                 }
-                if (target === 'bots' && typeof BotsPanel !== 'undefined') BotsPanel.render();
             });
         });
 

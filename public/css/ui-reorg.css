@@ -651,3 +651,190 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* ==================== SETTINGS SECTIONS ==================== */
+
+.settings-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 16px 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-section-title:first-child {
+    margin-top: 0;
+}
+
+/* ==================== LAB AUTONOMY SECTION ==================== */
+
+.lab-autonomy-section {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 0, 0, 0.3));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.lab-autonomy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.lab-autonomy-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.autonomy-status {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.autonomy-status.active {
+    background: var(--green-bg);
+    color: var(--green);
+}
+
+.autonomy-status.inactive {
+    background: rgba(100, 100, 100, 0.2);
+    color: var(--dim);
+}
+
+.btn-autonomy {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--green-bg);
+    color: var(--green);
+}
+
+.btn-autonomy:hover {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.btn-autonomy.running {
+    background: var(--red-bg);
+    color: var(--red);
+}
+
+.btn-autonomy.running:hover {
+    background: rgba(244, 63, 94, 0.3);
+}
+
+.lab-autonomy-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.autonomy-mode-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.autonomy-mode-selector select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.autonomy-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--dim);
+}
+
+.autonomy-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ==================== LAB MASTERS SECTION ==================== */
+
+.lab-masters-section {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.lab-masters-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 12px;
+}
+
+.lab-masters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.master-card {
+    background: var(--card);
+    border: 1px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.master-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.master-card-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+}
+
+.master-card-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    font-size: 10px;
+}
+
+.master-stat {
+    display: flex;
+    justify-content: space-between;
+}
+
+.master-stat-label {
+    color: var(--dim);
+}
+
+.master-stat-value {
+    font-weight: 500;
+    color: var(--text);
+}
