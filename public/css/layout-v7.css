@@ -1038,33 +1038,640 @@
     padding: var(--space-lg);
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* ==================== MOBILE NAVIGATION ==================== */
+
+.mobile-nav {
+    display: none;
+}
+
+.mobile-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: calc(var(--z-overlay) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mobile-specific header adjustments */
+@media (max-width: 1024px) {
+    .header {
+        padding: 0 var(--space-md) !important;
+    }
+
+    .header-left {
+        gap: var(--space-sm);
+    }
+
+    .header-logo {
+        font-size: var(--text-lg);
+    }
+
+    .header-right {
+        gap: var(--space-xs);
+    }
+
+    .header-btn {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--text-xs);
+    }
+
+    /* Hide some buttons on mobile */
+    .header-btn.dashboard-btn span,
+    .header-btn.settings-btn span {
+        display: none;
+    }
+}
+
+/* ==================== RESPONSIVE - ALL SCREENS ==================== */
+
+/* Large Desktop (1600px+) */
+@media (min-width: 1600px) {
+    :root {
+        --sidebar-left-width: 320px;
+        --sidebar-right-width: 400px;
+        --text-xs: 10px;
+        --text-sm: 12px;
+        --text-md: 13px;
+        --text-lg: 15px;
+    }
+}
+
+/* Desktop (1400px - 1600px) */
+@media (max-width: 1599px) {
+    :root {
+        --sidebar-left-width: 280px;
+        --sidebar-right-width: 360px;
+    }
+}
+
+/* Small Desktop (1200px - 1400px) */
 @media (max-width: 1400px) {
     :root {
         --sidebar-left-width: 260px;
         --sidebar-right-width: 320px;
     }
+
+    .lab-body {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
 }
 
+/* Tablet Landscape / Small Desktop (1024px - 1200px) */
 @media (max-width: 1200px) {
     :root {
         --sidebar-left-width: 240px;
-        --sidebar-right-width: 300px;
+        --sidebar-right-width: 280px;
+        --header-height: 48px;
     }
 
-    .pos-grid {
-        grid-template-columns: 1fr;
+    .pos-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .lab-body {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .lab-bot-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .autonomy-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
+/* Tablet Portrait (768px - 1024px) */
 @media (max-width: 1024px) {
+    :root {
+        --header-height: 56px;
+    }
+
+    /* Switch to single column with tabs */
     .trading-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+    }
+
+    /* Hide desktop sidebars */
+    .sidebar-left,
+    .sidebar-right {
+        position: fixed;
+        top: var(--header-height);
+        bottom: 60px;
+        width: 85%;
+        max-width: 360px;
+        z-index: var(--z-overlay);
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-left {
+        left: 0;
+    }
+
+    .sidebar-right {
+        right: 0;
+        left: auto;
+        transform: translateX(100%);
+    }
+
+    .sidebar-left.open,
+    .sidebar-right.open {
+        transform: translateX(0);
+    }
+
+    /* Mobile bottom navigation */
+    .mobile-nav {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        z-index: var(--z-sticky);
+        justify-content: space-around;
+        align-items: center;
+        padding: 0 var(--space-sm);
+    }
+
+    .mobile-nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: var(--space-sm);
+        background: none;
+        border: none;
+        color: var(--dim);
+        font-size: 10px;
+        cursor: pointer;
+        transition: color 0.2s;
+        min-width: 60px;
+    }
+
+    .mobile-nav-btn.active {
+        color: var(--cyan);
+    }
+
+    .mobile-nav-btn-icon {
+        font-size: 20px;
+    }
+
+    /* Center content takes full width */
+    .main-content {
+        padding-bottom: 60px;
+    }
+
+    /* Chart adjustments */
+    .chart-main {
+        min-height: 300px;
+    }
+
+    /* Trading controls stack */
+    .trading-controls {
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+
+    /* Position cards full width */
+    .pos-card {
+        margin: var(--space-xs);
+    }
+
+    /* LAB modal full screen */
+    .lab-container {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .lab-body {
         grid-template-columns: 1fr;
     }
 
+    /* MasterBots panel adjustments */
+    .masterbots-panel {
+        margin: var(--space-sm);
+    }
+}
+
+/* Mobile Large (480px - 768px) */
+@media (max-width: 768px) {
+    :root {
+        --text-2xs: 7px;
+        --text-xs: 8px;
+        --text-sm: 10px;
+        --text-md: 11px;
+        --text-lg: 13px;
+        --text-xl: 15px;
+        --text-2xl: 18px;
+        --text-3xl: 22px;
+        --space-lg: 14px;
+        --space-xl: 20px;
+    }
+
+    /* Header compact */
+    .header {
+        padding: 0 var(--space-sm);
+    }
+
+    .symbol-info-compact {
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+
+    .symbol-name {
+        font-size: var(--text-lg);
+    }
+
+    /* Sidebar full width */
     .sidebar-left,
     .sidebar-right {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Position detail sections */
+    .pos-grid-2,
+    .pos-grid-3,
+    .pos-grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .pos-detail-pnl-value {
+        font-size: var(--text-xl);
+    }
+
+    .pos-detail-progress-endpoints {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .endpoint {
+        text-align: center !important;
+    }
+
+    /* LAB bot cards */
+    .lab-bot-card {
+        padding: var(--space-md);
+    }
+
+    .lab-bot-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-xs);
+    }
+
+    .lab-bot-actions {
+        flex-wrap: wrap;
+    }
+
+    .lab-btn {
+        flex: 1 1 45%;
+        min-width: 80px;
+    }
+
+    /* Autonomy stats */
+    .autonomy-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Radar items */
+    .radar-item {
+        padding: var(--space-sm);
+    }
+
+    .radar-item-bottom {
         display: none;
+    }
+
+    /* MasterBots grid */
+    .masterbots-grid {
+        gap: var(--space-xs);
+    }
+
+    .masterbot-item-reason {
+        display: none;
+    }
+
+    /* Quick stats */
+    .pos-quick-stats,
+    .pos-card-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Trading panel compact */
+    .trading-panel {
+        padding: var(--space-sm);
+    }
+
+    /* Control bar wrap */
+    .control-bar {
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        height: auto;
+        padding: var(--space-sm);
+    }
+}
+
+/* Mobile Small (< 480px) */
+@media (max-width: 480px) {
+    :root {
+        --text-2xs: 6px;
+        --text-xs: 7px;
+        --text-sm: 9px;
+        --text-md: 10px;
+        --text-lg: 12px;
+        --text-xl: 14px;
+        --text-2xl: 16px;
+        --space-md: 10px;
+        --space-lg: 12px;
+    }
+
+    /* Even more compact header */
+    .header {
+        height: 48px;
+    }
+
+    /* Price info simplified */
+    .symbol-change {
+        display: none;
+    }
+
+    /* Position cards super compact */
+    .pos-card {
+        padding: var(--space-sm);
+        margin: var(--space-2xs);
+        border-radius: 10px;
+    }
+
+    .pos-card-pnl {
+        padding: var(--space-sm);
+    }
+
+    .pos-card-pnl-value {
+        font-size: var(--text-lg);
+    }
+
+    .pos-card-progress {
+        margin-bottom: var(--space-sm);
+    }
+
+    .pos-card-stats {
+        gap: var(--space-2xs);
+    }
+
+    .pos-card-stat {
+        padding: var(--space-2xs);
+    }
+
+    .pos-card-expand-hint {
+        display: none;
+    }
+
+    /* Detail view compact */
+    .pos-detail-nav {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .pos-detail-back,
+    .pos-detail-close-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .pos-detail-identity {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .pos-detail-badges {
+        justify-content: center;
+    }
+
+    .pos-section-header {
+        padding: var(--space-sm);
+    }
+
+    .pos-metric {
+        padding: var(--space-xs);
+    }
+
+    /* LAB super compact */
+    .lab-header {
+        padding: var(--space-md);
+    }
+
+    .lab-title {
+        font-size: var(--text-lg);
+    }
+
+    .lab-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .lab-tab {
+        padding: var(--space-sm) var(--space-md);
+        white-space: nowrap;
+    }
+
+    .lab-bot-card {
+        padding: var(--space-sm);
+    }
+
+    .lab-bot-name {
+        font-size: var(--text-md);
+    }
+
+    .lab-bot-wallet {
+        padding: var(--space-xs);
+    }
+
+    .lab-bot-sparkline {
+        display: none;
+    }
+
+    /* MasterBots minimal */
+    .masterbots-panel {
+        padding: var(--space-sm);
+    }
+
+    .masterbots-panel-title span:first-child {
+        display: none;
+    }
+
+    .masterbots-signal-counts {
+        gap: var(--space-md);
+        font-size: var(--text-xs);
+    }
+
+    /* Mobile nav larger touch targets */
+    .mobile-nav {
+        height: 56px;
+    }
+
+    .mobile-nav-btn {
+        padding: var(--space-xs);
+        min-width: 50px;
+    }
+
+    .mobile-nav-btn-icon {
+        font-size: 18px;
+    }
+
+    /* Hide less important elements */
+    .lab-global-stats {
+        display: none;
+    }
+
+    .pos-detail-liq {
+        flex-wrap: wrap;
+        font-size: var(--text-xs);
+    }
+
+    .pos-detail-liq-alert {
+        width: 100%;
+        text-align: center;
+        margin-top: var(--space-xs);
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .sidebar-tab,
+    .lab-tab {
+        min-height: 44px;
+    }
+
+    .pos-card {
+        min-height: 44px;
+    }
+
+    .lab-btn {
+        min-height: 44px;
+    }
+
+    .pos-section-header {
+        min-height: 48px;
+    }
+
+    /* Remove hover effects that don't work on touch */
+    .pos-card:hover {
+        transform: none;
+    }
+
+    .pos-card:active {
+        transform: scale(0.98);
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .lab-bot-card:hover {
+        transform: none;
+    }
+
+    .lab-bot-card:active {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Disable animations that cause jank on mobile */
+    .pos-card::before,
+    .lab-bot-card::before {
+        display: none;
+    }
+}
+
+/* Landscape phone orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        height: 40px;
+    }
+
+    .mobile-nav {
+        height: 44px;
+    }
+
+    .main-content {
+        padding-bottom: 44px;
+    }
+
+    .chart-main {
+        min-height: 200px;
+    }
+
+    /* Hide non-essential in landscape */
+    .pos-card-stats {
+        display: none;
+    }
+
+    .lab-body {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .pos-card,
+    .lab-bot-card,
+    .masterbots-panel {
+        border-width: 0.5px;
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Dark mode preference (already dark, but ensure) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+}
+
+/* Print styles */
+@media print {
+    .mobile-nav,
+    .sidebar-left,
+    .sidebar-right,
+    .header {
+        display: none !important;
+    }
+
+    .trading-layout {
+        display: block;
+    }
+
+    .main-content {
+        padding: 0;
+    }
+
+    .pos-card {
+        break-inside: avoid;
+        border: 1px solid #333;
     }
 }
 

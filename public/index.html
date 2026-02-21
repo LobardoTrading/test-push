@@ -233,6 +233,31 @@
     </main>
 
     <!-- ═══════════════════════════════════════════════════════════
+         MOBILE NAVIGATION
+         ═══════════════════════════════════════════════════════════ -->
+    <nav class="mobile-nav" id="mobileNav" style="display: none;">
+        <button class="mobile-nav-btn" data-panel="markets" onclick="MobileNav.toggle('left')">
+            <span class="mobile-nav-btn-icon">📊</span>
+            <span>Markets</span>
+        </button>
+        <button class="mobile-nav-btn active" data-panel="chart" onclick="MobileNav.showChart()">
+            <span class="mobile-nav-btn-icon">📈</span>
+            <span>Chart</span>
+        </button>
+        <button class="mobile-nav-btn" data-panel="positions" onclick="MobileNav.toggle('right')">
+            <span class="mobile-nav-btn-icon">💼</span>
+            <span>Positions</span>
+        </button>
+        <button class="mobile-nav-btn" data-panel="lab" onclick="Lab.open()">
+            <span class="mobile-nav-btn-icon">🧪</span>
+            <span>Lab</span>
+        </button>
+    </nav>
+
+    <!-- Mobile Overlay for closing sidebars -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="MobileNav.closeAll()"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════
          COCKPIT — Performance Analytics
          ═══════════════════════════════════════════════════════════ -->
     <div class="dashboard-overlay" id="dashboardOverlay">
@@ -430,6 +455,7 @@
     <script src="js/components/quick-performance.js"></script>
     <script src="js/components/scanner.js"></script>
     <script src="js/components/dashboard.js"></script>
+    <script src="js/components/mobile-nav.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
