@@ -235,31 +235,39 @@ const App = {
     },
 
     _bindLeftTabs() {
-        document.querySelectorAll('.left-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const target = tab.dataset.tab;
-                // FIX: Actualizar clases y ARIA attributes para accesibilidad
-                document.querySelectorAll('.left-tab').forEach(t => {
-                    t.classList.remove('active');
-                    t.setAttribute('aria-selected', 'false');
-                });
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-                document.querySelectorAll('.left-tab-content').forEach(c => c.classList.remove('active'));
-                const content = document.getElementById(`tab-${target}`);
-                if (content) content.classList.add('active');
-                // Render specific content based on tab
-                if (target === 'tradelog' && typeof TradeLog !== 'undefined') TradeLog.render();
-                if (target === 'activity') {
-                    if (typeof TradeLog !== 'undefined') TradeLog.render();
-                    if (typeof EventFeed !== 'undefined') EventFeed.renderInline();
-                }
-            });
-        });
+        // Left sidebar tabs are handled by Scanner._bindSidebarTabs()
+        // Here we bind right sidebar tabs
+        const rightSidebar = document.querySelector('.sidebar-right');
+        if (rightSidebar) {
+            rightSidebar.querySelectorAll('.sidebar-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.tab;
 
+                    // Update tabs
+                    rightSidebar.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Update content
+                    rightSidebar.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
+                    const content = document.getElementById(`sidebar-${tabName}`);
+                    if (content) content.classList.add('active');
+
+                    // Render specific content
+                    if (tabName === 'positions' && typeof Positions !== 'undefined') {
+                        Positions.render();
+                    }
+                    if (tabName === 'activity') {
+                        if (typeof TradeLog !== 'undefined') TradeLog.render();
+                        if (typeof EventFeed !== 'undefined') EventFeed.renderInline();
+                    }
+                });
+            });
+        }
+
+        // Auto-switch to positions when a position is opened
         State.subscribe('positions', (positions) => {
             if (positions.length > 0) {
-                const posTab = document.querySelector('.left-tab[data-tab="positions"]');
+                const posTab = document.querySelector('.sidebar-right .sidebar-tab[data-tab="positions"]');
                 if (posTab && !posTab.classList.contains('active')) {
                     posTab.click();
                 }

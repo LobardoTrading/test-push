@@ -17,6 +17,8 @@ const Autonomy = {
     _STORAGE_KEY: 'tp_autonomy',
     _checkInterval: null,
     _lastCheck: 0,
+    _running: false,
+    _currentMode: 'moderate',
 
     // ═══════════════════════════════════════
     // CONFIG
@@ -68,12 +70,71 @@ const Autonomy = {
     init() {
         this._loadState();
         console.log(`🤖 Autonomy initialized — Level ${this.state.level}`);
-        EventFeed.system(`Autonomía activa — Nivel ${this.state.level}: ${this._getLevelName()}`);
+        if (typeof EventFeed !== 'undefined') {
+            EventFeed.system(`Autonomía activa — Nivel ${this.state.level}: ${this._getLevelName()}`);
+        }
+    },
 
-        // Empezar checks periódicos
+    start() {
+        if (this._running) return;
+        this._running = true;
+
+        // Start periodic checks
         this._checkInterval = setInterval(() => this._periodicCheck(), this.state.config.checkIntervalMs);
-        // Primer check después de 30s (dar tiempo a que el radar escanee)
+        // First check after 30s
         setTimeout(() => this._periodicCheck(), 30000);
+
+        console.log('🤖 Autonomy started');
+        Utils.showNotification('Autonomy Bot iniciado', 'success');
+        if (typeof EventFeed !== 'undefined') {
+            EventFeed.system('Autonomy Bot activado');
+        }
+    },
+
+    stop() {
+        if (!this._running) return;
+        this._running = false;
+
+        if (this._checkInterval) {
+            clearInterval(this._checkInterval);
+            this._checkInterval = null;
+        }
+
+        console.log('🤖 Autonomy stopped');
+        Utils.showNotification('Autonomy Bot detenido', 'info');
+        if (typeof EventFeed !== 'undefined') {
+            EventFeed.system('Autonomy Bot detenido');
+        }
+    },
+
+    isRunning() {
+        return this._running;
+    },
+
+    getStatus() {
+        return {
+            running: this._running,
+            level: this.state?.level || 0,
+            levelName: this._getLevelName(),
+            autoBots: (this.state?.autoBotIds || []).length,
+            config: this.state?.config || {},
+            stats: {
+                totalTrades: this.state?.totalAutoTrades || 0,
+                winRate: this.state?.totalAutoTrades > 0
+                    ? ((this.state?.totalAutoWins || 0) / this.state.totalAutoTrades * 100)
+                    : 0,
+                totalPnl: this.state?.totalAutoPnl || 0
+            },
+            history: this.state?.history || []
+        };
+    },
+
+    setMode(mode) {
+        this._currentMode = mode;
+        if (this.state?.config) {
+            this.state.config.autoTemp = mode;
+            this._saveState();
+        }
     },
 
     _loadState() {

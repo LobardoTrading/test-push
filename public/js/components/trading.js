@@ -15,6 +15,9 @@ const Trading = {
     _watcherCycles: 0,
     _watcherMaxCycles: 120,
 
+    // Prediction tracking for learning
+    _predictions: {},
+
     // ═══════════════════════════════════════
     // POSITION CONFIG (Binance Futures style)
     // ═══════════════════════════════════════
@@ -198,6 +201,9 @@ const Trading = {
 
             State.set('analysis', result);
             await Analysis.render(result);
+
+            // Save prediction for learning
+            this._savePrediction(result);
 
             this.tpSlMode = 'auto';
             this.manualTp = null;
@@ -864,6 +870,13 @@ const Trading = {
             localStorage.setItem(key, JSON.stringify(history));
             State._notify('tradeHistory', history);
 
+            // Verify prediction accuracy for learning
+            const predictionResult = this._verifyPrediction(trade);
+            if (predictionResult) {
+                console.log('📊 Prediction verified:', predictionResult.success ? '✅ Correct' : '❌ Wrong',
+                    `Accuracy: ${predictionResult.moveAccuracy.toFixed(1)}%`);
+            }
+
             // Save to IndexedDB for persistent learning
             if (typeof TradeDB !== 'undefined') {
                 TradeDB.saveTrade({
@@ -922,5 +935,168 @@ const Trading = {
             worstTrade: Math.min(...history.map(t => t.pnl), 0),
             profitFactor: totalLoss > 0 ? (totalProfit / totalLoss).toFixed(2) : '∞'
         };
+    },
+
+    // ═══════════════════════════════════════
+    // PREDICTION TRACKING FOR LEARNING
+    // ═══════════════════════════════════════
+
+    _savePrediction(result) {
+        if (!result || result.decision !== 'ENTER') return;
+
+        const prediction = {
+            id: Utils.generateId(),
+            symbol: State.symbol,
+            timeframe: State.timeframe,
+            mode: State.mode,
+            direction: result.direction,
+            entryPrice: result.price,
+            tp: result.tp,
+            sl: result.sl,
+            confidence: result.confidence || 0,
+            rrRatio: result.rr_ratio || 0,
+            bots: result.bots?.map(b => ({ name: b.name, signal: b.signal, score: b.score })) || [],
+            indicators: this._captureIndicators(),
+            timestamp: new Date().toISOString(),
+            verified: false
+        };
+
+        // Store prediction keyed by symbol
+        this._predictions[State.symbol] = prediction;
+
+        // Also persist to localStorage
+        try {
+            const allPredictions = JSON.parse(localStorage.getItem('tp_predictions') || '[]');
+            allPredictions.push(prediction);
+            // Keep last 200 predictions
+            if (allPredictions.length > 200) allPredictions.splice(0, allPredictions.length - 200);
+            localStorage.setItem('tp_predictions', JSON.stringify(allPredictions));
+        } catch (e) {
+            console.warn('Error saving prediction:', e);
+        }
+    },
+
+    _captureIndicators() {
+        const candles = State.candles;
+        if (!candles || candles.length < 21) return {};
+
+        const closes = candles.map(c => c.c);
+        const result = {};
+
+        try {
+            if (typeof Indicators !== 'undefined') {
+                const ema9s = Indicators.emaSeries(closes, 9);
+                const ema21s = Indicators.emaSeries(closes, 21);
+                const rsiS = Indicators.rsiSeries(closes, 14);
+
+                result.ema9 = ema9s.length > 0 ? ema9s[ema9s.length - 1] : null;
+                result.ema21 = ema21s.length > 0 ? ema21s[ema21s.length - 1] : null;
+                result.rsi = rsiS.length > 0 ? rsiS[rsiS.length - 1] : null;
+                result.price = closes[closes.length - 1];
+                result.emaSpread = result.ema9 && result.ema21 ?
+                    ((result.ema9 - result.ema21) / result.ema21 * 100).toFixed(3) : null;
+
+                // Calculate recent volatility
+                const atr = this._calculateATR(candles.slice(-14));
+                result.atr = atr;
+                result.atrPercent = atr && result.price ? ((atr / result.price) * 100).toFixed(2) : null;
+
+                // Volume analysis
+                const volumes = candles.slice(-20).map(c => c.v);
+                const avgVol = volumes.reduce((a, b) => a + b, 0) / volumes.length;
+                result.volumeRatio = candles[candles.length - 1].v / avgVol;
+            }
+        } catch (e) {
+            console.warn('Error capturing indicators:', e);
+        }
+
+        return result;
+    },
+
+    _calculateATR(candles) {
+        if (!candles || candles.length < 2) return 0;
+        let sum = 0;
+        for (let i = 1; i < candles.length; i++) {
+            const tr = Math.max(
+                candles[i].h - candles[i].l,
+                Math.abs(candles[i].h - candles[i - 1].c),
+                Math.abs(candles[i].l - candles[i - 1].c)
+            );
+            sum += tr;
+        }
+        return sum / (candles.length - 1);
+    },
+
+    _verifyPrediction(trade) {
+        // Find matching prediction
+        const predictions = JSON.parse(localStorage.getItem('tp_predictions') || '[]');
+        const prediction = predictions.find(p =>
+            p.symbol === trade.symbol &&
+            !p.verified &&
+            Math.abs(new Date(p.timestamp) - new Date(trade.timestamp)) < 60000 // Within 1 minute
+        );
+
+        if (!prediction) return null;
+
+        // Calculate prediction accuracy
+        const actualMove = trade.direction === 'LONG' ?
+            (trade.exitPrice - trade.entry) / trade.entry * 100 :
+            (trade.entry - trade.exitPrice) / trade.entry * 100;
+
+        const predictedTpMove = trade.direction === 'LONG' ?
+            (prediction.tp - prediction.entryPrice) / prediction.entryPrice * 100 :
+            (prediction.entryPrice - prediction.tp) / prediction.entryPrice * 100;
+
+        const accuracy = {
+            predictionId: prediction.id,
+            symbol: prediction.symbol,
+            direction: prediction.direction,
+            predictedConfidence: prediction.confidence,
+            predictedTpMove: predictedTpMove,
+            actualMove: actualMove,
+            hitTp: trade.reason === 'TP Hit',
+            hitSl: trade.reason === 'SL Hit',
+            pnl: trade.pnl,
+            success: trade.pnl > 0,
+            moveAccuracy: Math.max(0, 100 - Math.abs(predictedTpMove - actualMove) * 10),
+            indicators: prediction.indicators,
+            verifiedAt: new Date().toISOString()
+        };
+
+        // Mark prediction as verified
+        prediction.verified = true;
+        prediction.result = accuracy;
+        localStorage.setItem('tp_predictions', JSON.stringify(predictions));
+
+        // Feed back to LearningEngine
+        if (typeof LearningEngine !== 'undefined' && LearningEngine.recordPrediction) {
+            LearningEngine.recordPrediction(accuracy);
+        }
+
+        // Store prediction accuracy stats
+        this._updatePredictionStats(accuracy);
+
+        return accuracy;
+    },
+
+    _updatePredictionStats(accuracy) {
+        try {
+            const stats = JSON.parse(localStorage.getItem('tp_prediction_stats') || '{"total":0,"correct":0,"avgAccuracy":0}');
+            stats.total++;
+            if (accuracy.success) stats.correct++;
+            stats.avgAccuracy = ((stats.avgAccuracy * (stats.total - 1)) + accuracy.moveAccuracy) / stats.total;
+            stats.lastUpdate = new Date().toISOString();
+            localStorage.setItem('tp_prediction_stats', JSON.stringify(stats));
+        } catch (e) {
+            console.warn('Error updating prediction stats:', e);
+        }
+    },
+
+    getPredictionStats() {
+        try {
+            return JSON.parse(localStorage.getItem('tp_prediction_stats') || '{"total":0,"correct":0,"avgAccuracy":0}');
+        } catch (e) {
+            return { total: 0, correct: 0, avgAccuracy: 0 };
+        }
     }
 };

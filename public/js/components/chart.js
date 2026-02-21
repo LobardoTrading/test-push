@@ -78,6 +78,16 @@ const Chart = {
         this.canvas.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: false });
         this.canvas.addEventListener('touchend', () => this._onTouchEnd());
 
+        // Double-click to reset view
+        this.canvas.addEventListener('dblclick', () => this._resetView());
+
+        // Keyboard shortcuts for chart
+        this.canvas.addEventListener('keydown', (e) => this._onKeyDown(e));
+        this.canvas.setAttribute('tabindex', '0');
+
+        // Context menu
+        this.canvas.addEventListener('contextmenu', (e) => this._onContextMenu(e));
+
         // Fullscreen change
         document.addEventListener('fullscreenchange', () => {
             this._isFullscreen = !!document.fullscreenElement;
@@ -265,6 +275,126 @@ const Chart = {
 
     _onTouchEnd() { this._isDragging = false; this._pinchStartDist = 0; },
 
+    _resetView() {
+        this._visibleCount = 80;
+        this._offset = 0;
+        this.draw();
+        Utils.showNotification('Vista reseteada', 'info', 1500);
+    },
+
+    _onKeyDown(e) {
+        if (e.target !== this.canvas) return;
+
+        switch (e.key) {
+            case '+':
+            case '=':
+                this._visibleCount = Math.max(this._minVisible, this._visibleCount - 10);
+                this.draw();
+                break;
+            case '-':
+                this._visibleCount = Math.min(this._maxVisible, this._visibleCount + 10);
+                this.draw();
+                break;
+            case 'ArrowLeft':
+                this._offset = Math.min(this._offset + 5, (State.candles?.length || 100) - this._visibleCount);
+                this.draw();
+                break;
+            case 'ArrowRight':
+                this._offset = Math.max(0, this._offset - 5);
+                this.draw();
+                break;
+            case 'Home':
+                this._offset = (State.candles?.length || 100) - this._visibleCount;
+                this.draw();
+                break;
+            case 'End':
+                this._offset = 0;
+                this.draw();
+                break;
+            case 'r':
+            case 'R':
+                this._resetView();
+                break;
+        }
+    },
+
+    _onContextMenu(e) {
+        e.preventDefault();
+
+        // Remove existing menu
+        const existing = document.getElementById('chartContextMenu');
+        if (existing) existing.remove();
+
+        const menu = document.createElement('div');
+        menu.id = 'chartContextMenu';
+        menu.className = 'chart-context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            left: ${e.clientX}px;
+            top: ${e.clientY}px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 0;
+            min-width: 160px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        `;
+
+        const items = [
+            { label: '📷 Capturar imagen', action: () => this._screenshot() },
+            { label: '↺ Resetear vista', action: () => this._resetView() },
+            { label: '⛶ Pantalla completa', action: () => this._toggleFullscreen() },
+            { divider: true },
+            { label: this._logScale ? '📊 Escala lineal' : '📈 Escala logarítmica', action: () => {
+                this._logScale = !this._logScale;
+                this.draw();
+            }},
+        ];
+
+        items.forEach(item => {
+            if (item.divider) {
+                const div = document.createElement('div');
+                div.style.cssText = 'height: 1px; background: var(--border); margin: 4px 0;';
+                menu.appendChild(div);
+                return;
+            }
+
+            const btn = document.createElement('button');
+            btn.textContent = item.label;
+            btn.style.cssText = `
+                display: block;
+                width: 100%;
+                padding: 8px 14px;
+                background: none;
+                border: none;
+                color: var(--text);
+                font-size: 12px;
+                text-align: left;
+                cursor: pointer;
+                transition: background 0.15s;
+            `;
+            btn.addEventListener('mouseenter', () => btn.style.background = 'rgba(255,255,255,0.05)');
+            btn.addEventListener('mouseleave', () => btn.style.background = 'none');
+            btn.addEventListener('click', () => {
+                item.action();
+                menu.remove();
+            });
+            menu.appendChild(btn);
+        });
+
+        document.body.appendChild(menu);
+
+        // Close on click outside
+        const closeMenu = (ev) => {
+            if (!menu.contains(ev.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 10);
+    },
+
     // ==========================================
     //  RESIZE
     // ==========================================
@@ -373,6 +503,12 @@ const Chart = {
         if (this._indicators.ema21) this._drawEMA(ctx, 21, CONFIG.CHART.COLORS.ema21, 1.3);
         if (this._indicators.ema50) this._drawEMA(ctx, 50, CONFIG.CHART.COLORS.ema50, 1.0);
         if (this._indicators.vwap) this._drawVWAP(ctx);
+
+        // Draw prediction visualization when analysis is active
+        if (State.analysis && this._indicators.tpsl) {
+            this._drawPrediction(ctx);
+        }
+
         this._drawCurrentPrice(ctx);
         if (this._indicators.tpsl) this._drawLevels(ctx);
         if (this._indicators.positions) this._drawPositionLevels(ctx);
@@ -741,5 +877,285 @@ const Chart = {
     _drawLoading(ctx, w, h) {
         ctx.fillStyle = CONFIG.COLORS.muted; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('Cargando datos de mercado...', w / 2, h / 2);
+    },
+
+    // ==========================================
+    //  PREDICTION VISUALIZATION
+    // ==========================================
+
+    _drawPrediction(ctx) {
+        const L = this._layout;
+        const analysis = State.analysis;
+        if (!analysis || !analysis.price) return;
+
+        const pY = (p) => L.topPad + L.chartHeight - ((p - L.minPrice) / L.priceRange * L.chartHeight);
+        const currentPrice = analysis.price;
+        const tp = analysis.tp;
+        const sl = analysis.sl;
+        const direction = analysis.direction;
+        const confidence = analysis.confidence || 50;
+
+        // Get the last candle X position
+        const lastX = L.leftPad + (L.visible.length - 1) * L.barWidth + L.barWidth / 2;
+
+        // Calculate prediction path (projected future candles)
+        const projectedCandles = this._generatePredictionPath(analysis, L.visible);
+
+        // Draw probability cone (uncertainty zone)
+        this._drawProbabilityCone(ctx, lastX, currentPrice, tp, sl, direction, confidence, projectedCandles);
+
+        // Draw projected candles (ghost candles)
+        this._drawProjectedCandles(ctx, lastX, projectedCandles, direction);
+
+        // Draw target zones
+        this._drawTargetZones(ctx, tp, sl, direction, confidence);
+
+        // Draw prediction info box
+        this._drawPredictionInfo(ctx, analysis, projectedCandles);
+    },
+
+    _generatePredictionPath(analysis, visible) {
+        const direction = analysis.direction;
+        const currentPrice = analysis.price;
+        const tp = analysis.tp;
+        const sl = analysis.sl;
+        const confidence = analysis.confidence || 50;
+
+        // Calculate ATR from recent candles for volatility estimate
+        const atr = this._calculateATR(visible, 14);
+        const avgMove = atr * 0.6; // Expected candle range
+
+        // Generate 5-8 projected candles
+        const numCandles = Math.min(8, Math.max(5, Math.ceil(Math.abs(tp - currentPrice) / avgMove)));
+        const projected = [];
+
+        let price = currentPrice;
+        const targetMove = direction === 'LONG' ? (tp - currentPrice) : (currentPrice - tp);
+        const movePerCandle = targetMove / numCandles;
+
+        for (let i = 0; i < numCandles; i++) {
+            const progress = (i + 1) / numCandles;
+            const volatility = avgMove * (1 - confidence / 200); // Higher confidence = tighter range
+
+            // Primary scenario (towards TP)
+            const expectedClose = price + (direction === 'LONG' ? movePerCandle : -movePerCandle);
+
+            // Add some realistic wick variation
+            const wickUp = volatility * (0.3 + Math.random() * 0.4);
+            const wickDown = volatility * (0.2 + Math.random() * 0.3);
+
+            const candle = {
+                o: price,
+                c: expectedClose,
+                h: Math.max(price, expectedClose) + wickUp,
+                l: Math.min(price, expectedClose) - wickDown,
+                probability: confidence * (1 - progress * 0.15) // Probability decreases over time
+            };
+
+            projected.push(candle);
+            price = expectedClose;
+        }
+
+        return projected;
+    },
+
+    _calculateATR(candles, period) {
+        if (!candles || candles.length < period) return 0;
+        const recent = candles.slice(-period);
+        let sum = 0;
+        for (let i = 1; i < recent.length; i++) {
+            const tr = Math.max(
+                recent[i].h - recent[i].l,
+                Math.abs(recent[i].h - recent[i - 1].c),
+                Math.abs(recent[i].l - recent[i - 1].c)
+            );
+            sum += tr;
+        }
+        return sum / (period - 1);
+    },
+
+    _drawProbabilityCone(ctx, startX, currentPrice, tp, sl, direction, confidence, projected) {
+        const L = this._layout;
+        const pY = (p) => L.topPad + L.chartHeight - ((p - L.minPrice) / L.priceRange * L.chartHeight);
+
+        const numProjected = projected.length;
+        const candleWidth = L.barWidth;
+
+        // Calculate cone boundaries
+        const conePoints = {
+            upper: [{ x: startX, y: pY(currentPrice) }],
+            lower: [{ x: startX, y: pY(currentPrice) }]
+        };
+
+        projected.forEach((c, i) => {
+            const x = startX + (i + 1) * candleWidth;
+            conePoints.upper.push({ x, y: pY(c.h) });
+            conePoints.lower.push({ x, y: pY(c.l) });
+        });
+
+        // Draw probability cone fill
+        const gradient = ctx.createLinearGradient(startX, 0, startX + numProjected * candleWidth, 0);
+        const baseColor = direction === 'LONG' ? '34, 197, 94' : '239, 68, 68';
+        gradient.addColorStop(0, `rgba(${baseColor}, 0.15)`);
+        gradient.addColorStop(1, `rgba(${baseColor}, 0.03)`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        conePoints.upper.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        for (let i = conePoints.lower.length - 1; i >= 0; i--) ctx.lineTo(conePoints.lower[i].x, conePoints.lower[i].y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw cone edges
+        ctx.strokeStyle = direction === 'LONG' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        conePoints.upper.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+
+        ctx.beginPath();
+        conePoints.lower.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+    },
+
+    _drawProjectedCandles(ctx, startX, projected, direction) {
+        const L = this._layout;
+        const pY = (p) => L.topPad + L.chartHeight - ((p - L.minPrice) / L.priceRange * L.chartHeight);
+        const candleWidth = L.barWidth;
+
+        projected.forEach((c, i) => {
+            const x = startX + (i + 1) * candleWidth;
+            const isGreen = c.c >= c.o;
+            const alpha = 0.4 - (i * 0.04); // Fade out over time
+
+            // Draw wick
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, pY(c.h));
+            ctx.lineTo(x, pY(c.l));
+            ctx.stroke();
+
+            // Draw body
+            const bodyWidth = Math.max(1, candleWidth * 0.5);
+            const color = isGreen ? `rgba(34, 197, 94, ${alpha})` : `rgba(239, 68, 68, ${alpha})`;
+
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
+            const oY = pY(c.o), cY = pY(c.c);
+            ctx.fillRect(x - bodyWidth / 2, Math.min(oY, cY), bodyWidth, Math.max(2, Math.abs(cY - oY)));
+
+            // Draw probability indicator
+            if (i === projected.length - 1) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.font = '9px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${Math.round(c.probability)}%`, x, pY(c.c) - 12);
+            }
+        });
+    },
+
+    _drawTargetZones(ctx, tp, sl, direction, confidence) {
+        const L = this._layout;
+        const pY = (p) => L.topPad + L.chartHeight - ((p - L.minPrice) / L.priceRange * L.chartHeight);
+
+        // TP Zone (green gradient)
+        const tpY = pY(tp);
+        const tpZoneHeight = 20;
+        const tpGradient = ctx.createLinearGradient(0, tpY - tpZoneHeight / 2, 0, tpY + tpZoneHeight / 2);
+        tpGradient.addColorStop(0, 'rgba(34, 197, 94, 0)');
+        tpGradient.addColorStop(0.5, 'rgba(34, 197, 94, 0.15)');
+        tpGradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+
+        if (tpY > L.topPad && tpY < L.topPad + L.chartHeight) {
+            ctx.fillStyle = tpGradient;
+            ctx.fillRect(L.leftPad, tpY - tpZoneHeight / 2, L.chartWidth, tpZoneHeight);
+
+            // TP target marker
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(L.w - L.rightPad - 10, tpY);
+            ctx.lineTo(L.w - L.rightPad - 20, tpY - 8);
+            ctx.lineTo(L.w - L.rightPad - 20, tpY + 8);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // SL Zone (red gradient)
+        const slY = pY(sl);
+        const slGradient = ctx.createLinearGradient(0, slY - tpZoneHeight / 2, 0, slY + tpZoneHeight / 2);
+        slGradient.addColorStop(0, 'rgba(239, 68, 68, 0)');
+        slGradient.addColorStop(0.5, 'rgba(239, 68, 68, 0.15)');
+        slGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+        if (slY > L.topPad && slY < L.topPad + L.chartHeight) {
+            ctx.fillStyle = slGradient;
+            ctx.fillRect(L.leftPad, slY - tpZoneHeight / 2, L.chartWidth, tpZoneHeight);
+
+            // SL danger marker
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(L.w - L.rightPad - 10, slY);
+            ctx.lineTo(L.w - L.rightPad - 20, slY - 8);
+            ctx.lineTo(L.w - L.rightPad - 20, slY + 8);
+            ctx.closePath();
+            ctx.fill();
+        }
+    },
+
+    _drawPredictionInfo(ctx, analysis, projected) {
+        const L = this._layout;
+        const direction = analysis.direction;
+        const confidence = analysis.confidence || 50;
+        const tp = analysis.tp;
+        const sl = analysis.sl;
+        const price = analysis.price;
+
+        // Calculate expected outcome
+        const tpDist = ((Math.abs(tp - price) / price) * 100).toFixed(1);
+        const slDist = ((Math.abs(sl - price) / price) * 100).toFixed(1);
+        const rrRatio = analysis.rr_ratio || (Math.abs(tp - price) / Math.abs(sl - price)).toFixed(2);
+
+        // Draw info box in top right
+        const boxX = L.w - L.rightPad - 160;
+        const boxY = L.topPad + 30;
+        const boxW = 150;
+        const boxH = 95;
+
+        ctx.fillStyle = 'rgba(12, 12, 20, 0.9)';
+        ctx.strokeStyle = direction === 'LONG' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = direction === 'LONG' ? CONFIG.COLORS.green : CONFIG.COLORS.red;
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`📊 PREDICCIÓN ${direction}`, boxX + 8, boxY + 16);
+
+        // Stats
+        ctx.font = '10px monospace';
+        ctx.fillStyle = CONFIG.COLORS.text;
+
+        const lines = [
+            `Confianza: ${confidence}%`,
+            `TP: +${tpDist}%`,
+            `SL: -${slDist}%`,
+            `R:R: ${rrRatio}:1`,
+            `Velas: ~${projected.length}`
+        ];
+
+        lines.forEach((line, i) => {
+            const color = i === 1 ? CONFIG.COLORS.green : i === 2 ? CONFIG.COLORS.red : CONFIG.COLORS.text;
+            ctx.fillStyle = color;
+            ctx.fillText(line, boxX + 8, boxY + 32 + i * 13);
+        });
     }
 };

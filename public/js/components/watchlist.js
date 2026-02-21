@@ -1,30 +1,27 @@
 /* ========================================
-   WATCHLIST v5 — Full Binance Futures Search
-   + Favorites + Filters + Big Opportunities
-   TheRealShortShady v4.3
+   WATCHLIST v6 — All Binance Futures Symbols
+   TheRealShortShady v6.0
    ======================================== */
 
 const Watchlist = {
-
-    _prevPrices: {},
-    _allSymbols: [],          // All Binance Futures symbols cached
-    _allSymbolsLoaded: false,
-    _favorites: [],           // User pinned symbols
+    _allSymbols: [],
+    _tickers: {},
+    _favorites: [],
     _searchQuery: '',
-    _sortBy: 'volume',
-    _sortDir: 'desc',
-    _filterMode: 'favorites', // favorites | all | gainers | losers | volatile | hot
-    _selectTimeout: null,
-    _searchTimeout: null,
-    _allPricesInterval: null,
+    _filterMode: 'favorites',
+    _loaded: false,
     _FAV_KEY: 'trss_watchlist_favs',
 
     init() {
         this._loadFavorites();
-        this.render();
-        this.subscribeToState();
-        setTimeout(() => this._fetchAllSymbols(), 3000);
-        this._allPricesInterval = setInterval(() => this._fetchAllSymbols(), 60000);
+        this._bindSearch();
+        this._fetchAllData();
+
+        // Refresh every 30 seconds
+        setInterval(() => this._fetchTickers(), 30000);
+
+        // Subscribe to state changes
+        State.subscribe('symbol', () => this._updateActive());
     },
 
     _loadFavorites() {
@@ -33,15 +30,88 @@ const Watchlist = {
             if (saved && Array.isArray(saved) && saved.length > 0) {
                 this._favorites = saved;
             } else {
-                this._favorites = Object.keys(CONFIG.TOKENS);
+                this._favorites = Object.keys(CONFIG.TOKENS).slice(0, 20);
             }
         } catch (e) {
-            this._favorites = Object.keys(CONFIG.TOKENS);
+            this._favorites = Object.keys(CONFIG.TOKENS).slice(0, 20);
         }
     },
 
     _saveFavorites() {
-        try { localStorage.setItem(this._FAV_KEY, JSON.stringify(this._favorites)); } catch (e) { }
+        try {
+            localStorage.setItem(this._FAV_KEY, JSON.stringify(this._favorites));
+        } catch (e) {}
+    },
+
+    _bindSearch() {
+        const input = document.getElementById('marketSearch');
+        if (input) {
+            input.addEventListener('input', (e) => {
+                this._searchQuery = e.target.value.toUpperCase().trim();
+                this.render();
+            });
+        }
+    },
+
+    async _fetchAllData() {
+        await Promise.all([
+            this._fetchSymbols(),
+            this._fetchTickers()
+        ]);
+        this._loaded = true;
+        this.render();
+    },
+
+    async _fetchSymbols() {
+        try {
+            const response = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo');
+            const data = await response.json();
+
+            this._allSymbols = data.symbols
+                .filter(s => s.status === 'TRADING' && s.quoteAsset === 'USDT')
+                .map(s => s.baseAsset);
+
+            console.log(`📋 Watchlist: Loaded ${this._allSymbols.length} symbols`);
+        } catch (e) {
+            console.error('Watchlist: Failed to fetch symbols', e);
+            this._allSymbols = Object.keys(CONFIG.TOKENS);
+        }
+    },
+
+    async _fetchTickers() {
+        try {
+            const response = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr');
+            const data = await response.json();
+
+            data.forEach(t => {
+                if (t.symbol.endsWith('USDT')) {
+                    const base = t.symbol.replace('USDT', '');
+                    this._tickers[base] = {
+                        price: parseFloat(t.lastPrice),
+                        change: parseFloat(t.priceChangePercent),
+                        volume: parseFloat(t.quoteVolume),
+                        high: parseFloat(t.highPrice),
+                        low: parseFloat(t.lowPrice)
+                    };
+                }
+            });
+
+            // Update State.prices for compatibility
+            Object.entries(this._tickers).forEach(([symbol, data]) => {
+                if (!State.prices[symbol]) {
+                    State.prices[symbol] = data;
+                }
+            });
+
+            if (this._loaded) this.render();
+        } catch (e) {
+            console.error('Watchlist: Failed to fetch tickers', e);
+        }
+    },
+
+    setFilter(mode) {
+        this._filterMode = mode;
+        this.render();
     },
 
     toggleFavorite(symbol) {
@@ -55,50 +125,17 @@ const Watchlist = {
         this.render();
     },
 
-    async _fetchAllSymbols() {
-        try {
-            const resp = await fetch('/api/prices?scope=all');
-            if (!resp.ok) return;
-            const data = await resp.json();
-            if (data && typeof data === 'object' && !data.error) {
-                this._allSymbols = Object.entries(data).map(([symbol, info]) => ({
-                    symbol, ...info
-                }));
-                this._allSymbolsLoaded = true;
-                if (this._filterMode !== 'favorites' || this._searchQuery) {
-                    this.render();
-                }
-                // Update search placeholder count
-                const input = document.getElementById('wlSearch');
-                if (input) input.placeholder = `Buscar... (${this._allSymbols.length} pares)`;
-            }
-        } catch (e) {
-            console.warn('Watchlist: fetch all failed', e);
-        }
-    },
+    selectSymbol(symbol) {
+        State.set('symbol', symbol);
+        State.set('analysis', null);
 
-    setFilter(mode) {
-        this._filterMode = mode;
-        this._searchQuery = '';
-        const input = document.getElementById('wlSearch');
-        if (input) input.value = '';
-        this.render();
-    },
+        if (typeof SymbolInfo !== 'undefined') SymbolInfo.update();
+        if (typeof Analysis !== 'undefined') Analysis.clear();
 
-    onSearch(query) {
-        this._searchQuery = query.toUpperCase().trim();
-        if (this._searchTimeout) clearTimeout(this._searchTimeout);
-        this._searchTimeout = setTimeout(() => {
-            if (this._searchQuery && !this._allSymbolsLoaded) this._fetchAllSymbols();
-            this.render();
-        }, 150);
-    },
-
-    clearSearch() {
-        this._searchQuery = '';
-        const input = document.getElementById('wlSearch');
-        if (input) input.value = '';
-        this.render();
+        // Auto analyze after delay
+        setTimeout(() => {
+            if (typeof Trading !== 'undefined') Trading.analyze();
+        }, 1500);
     },
 
     render() {
@@ -107,222 +144,90 @@ const Watchlist = {
 
         const symbols = this._getFilteredSymbols();
         const searching = this._searchQuery.length > 0;
-        const fm = this._filterMode;
 
         container.innerHTML = `
-            <div class="wl-toolbar">
-                <div class="wl-search-wrap">
-                    <span class="wl-search-icon">🔍</span>
-                    <input type="text" id="wlSearch" class="wl-search"
-                           placeholder="Buscar... (${this._allSymbols.length || '...'} pares)"
-                           value="${this._searchQuery}"
-                           oninput="Watchlist.onSearch(this.value)"
-                           autocomplete="off" spellcheck="false">
-                    ${this._searchQuery ? '<button class="wl-search-clear" onclick="Watchlist.clearSearch()">✕</button>' : ''}
-                </div>
-                <div class="wl-filters">
-                    <button class="wl-filter ${fm === 'favorites' && !searching ? 'active' : ''}" onclick="Watchlist.setFilter('favorites')">⭐</button>
-                    <button class="wl-filter ${fm === 'hot' && !searching ? 'active' : ''}" onclick="Watchlist.setFilter('hot')">🔥</button>
-                    <button class="wl-filter ${fm === 'gainers' && !searching ? 'active' : ''}" onclick="Watchlist.setFilter('gainers')">📈</button>
-                    <button class="wl-filter ${fm === 'losers' && !searching ? 'active' : ''}" onclick="Watchlist.setFilter('losers')">📉</button>
-                    <button class="wl-filter ${fm === 'volatile' && !searching ? 'active' : ''}" onclick="Watchlist.setFilter('volatile')">⚡</button>
-                    <button class="wl-filter ${fm === 'all' && !searching ? 'active' : ''}" onclick="Watchlist.setFilter('all')">ALL</button>
-                </div>
+            <div class="wl-filters">
+                <button class="wl-filter ${this._filterMode === 'favorites' ? 'active' : ''}" onclick="Watchlist.setFilter('favorites')">★ Favoritos</button>
+                <button class="wl-filter ${this._filterMode === 'gainers' ? 'active' : ''}" onclick="Watchlist.setFilter('gainers')">📈 Top</button>
+                <button class="wl-filter ${this._filterMode === 'losers' ? 'active' : ''}" onclick="Watchlist.setFilter('losers')">📉 Bottom</button>
+                <button class="wl-filter ${this._filterMode === 'all' ? 'active' : ''}" onclick="Watchlist.setFilter('all')">All</button>
             </div>
-            <div class="wl-list" id="wlList">
-                ${symbols.length === 0 ? this._renderEmpty(searching) : symbols.map(s => this._renderItem(s)).join('')}
+            <div class="wl-count">${symbols.length} ${searching ? 'resultados' : 'pares'}</div>
+            <div class="wl-list">
+                ${symbols.length === 0 ? this._renderEmpty() : symbols.map(s => this._renderItem(s)).join('')}
             </div>
         `;
-
-        if (searching) {
-            const input = document.getElementById('wlSearch');
-            if (input) { input.focus(); input.selectionStart = input.selectionEnd = input.value.length; }
-        }
     },
 
     _getFilteredSymbols() {
         let list = [];
-        const coreKeys = Object.keys(CONFIG.TOKENS);
         const searching = this._searchQuery.length > 0;
 
         if (searching) {
-            const q = this._searchQuery;
-            const coreMatches = coreKeys
-                .filter(s => s.includes(q) || (CONFIG.TOKENS[s]?.name || '').toUpperCase().includes(q))
-                .map(s => this._buildItem(s, State.prices[s], true));
-
-            if (this._allSymbolsLoaded) {
-                const allMatches = this._allSymbols
-                    .filter(s => s.symbol.includes(q) && !coreKeys.includes(s.symbol))
-                    .slice(0, 50)
-                    .map(s => this._buildItem(s.symbol, s, false));
-                list = [...coreMatches, ...allMatches];
-            } else {
-                list = coreMatches;
-            }
+            list = this._allSymbols.filter(s => s.includes(this._searchQuery));
         } else if (this._filterMode === 'favorites') {
-            list = this._favorites.map(s => {
-                const price = State.prices[s] || this._allSymbols.find(a => a.symbol === s);
-                return this._buildItem(s, price, coreKeys.includes(s));
-            });
-        } else if (this._filterMode === 'all' && this._allSymbolsLoaded) {
-            list = this._allSymbols.slice(0, 100).map(s => this._buildItem(s.symbol, s, coreKeys.includes(s.symbol)));
-        } else if (this._filterMode === 'gainers' && this._allSymbolsLoaded) {
-            list = [...this._allSymbols].sort((a, b) => b.change - a.change).slice(0, 30)
-                .map(s => this._buildItem(s.symbol, s, coreKeys.includes(s.symbol)));
-        } else if (this._filterMode === 'losers' && this._allSymbolsLoaded) {
-            list = [...this._allSymbols].sort((a, b) => a.change - b.change).slice(0, 30)
-                .map(s => this._buildItem(s.symbol, s, coreKeys.includes(s.symbol)));
-        } else if (this._filterMode === 'volatile' && this._allSymbolsLoaded) {
-            list = [...this._allSymbols].sort((a, b) => (b.volatility || 0) - (a.volatility || 0)).slice(0, 30)
-                .map(s => this._buildItem(s.symbol, s, coreKeys.includes(s.symbol)));
-        } else if (this._filterMode === 'hot' && this._allSymbolsLoaded) {
-            list = [...this._allSymbols]
-                .map(s => ({ ...s, hotScore: Math.abs(s.change || 0) * Math.log10(Math.max(s.volume || 1, 1)) }))
-                .sort((a, b) => b.hotScore - a.hotScore).slice(0, 30)
-                .map(s => this._buildItem(s.symbol, s, coreKeys.includes(s.symbol)));
-        } else {
-            // Fallback
-            list = this._favorites.map(s => this._buildItem(s, State.prices[s], coreKeys.includes(s)));
+            list = this._favorites;
+        } else if (this._filterMode === 'all') {
+            list = this._allSymbols.slice(0, 100);
+        } else if (this._filterMode === 'gainers') {
+            list = Object.entries(this._tickers)
+                .sort((a, b) => b[1].change - a[1].change)
+                .slice(0, 30)
+                .map(([s]) => s);
+        } else if (this._filterMode === 'losers') {
+            list = Object.entries(this._tickers)
+                .sort((a, b) => a[1].change - b[1].change)
+                .slice(0, 30)
+                .map(([s]) => s);
         }
 
         return list;
     },
 
-    _buildItem(symbol, data, isCore) {
-        return {
-            symbol,
-            price: data?.price || 0,
-            change: data?.change || 0,
-            volume: data?.volume || 0,
-            volatility: data?.volatility || 0,
-            isCore,
-            isFav: this._favorites.includes(symbol),
-        };
-    },
-
-    _renderItem(item) {
-        const isActive = item.symbol === State.symbol;
-        const ch = item.change || 0;
-        const isUp = ch >= 0;
-        const volStr = this._fmtVol(item.volume);
-        const searching = this._searchQuery.length > 0;
-        const showingAll = this._filterMode !== 'favorites' || searching;
+    _renderItem(symbol) {
+        const ticker = this._tickers[symbol] || State.prices[symbol] || {};
+        const isActive = symbol === State.symbol;
+        const isFav = this._favorites.includes(symbol);
+        const change = ticker.change || 0;
+        const isUp = change >= 0;
 
         return `
-            <div class="wl-item ${isActive ? 'active' : ''} ${!item.isCore ? 'wl-dynamic' : ''}"
-                 data-symbol="${item.symbol}"
-                 onclick="Watchlist.selectSymbol('${item.symbol}')">
-                ${showingAll ? `
-                    <button class="wl-fav-btn ${item.isFav ? 'active' : ''}"
-                            onclick="event.stopPropagation(); Watchlist.toggleFavorite('${item.symbol}')"
-                            title="${item.isFav ? 'Quitar' : 'Agregar'} favorito">
-                        ${item.isFav ? '★' : '☆'}
-                    </button>
-                ` : ''}
-                <div class="wl-info">
-                    <span class="wl-symbol">${item.symbol}</span>
-                    <span class="wl-grade ${(item.isCore ? CONFIG.TOKENS[item.symbol]?.grade : 'C').toLowerCase()}">${item.isCore ? CONFIG.TOKENS[item.symbol]?.grade || '?' : 'C'}</span>
-                </div>
-                <div class="wl-price-info">
-                    <div class="wl-price" id="wl-price-${item.symbol}">
-                        $${Utils.formatPrice(item.price)}
-                    </div>
-                    <div class="wl-change ${isUp ? 'up' : 'down'}" id="wl-change-${item.symbol}">
-                        ${isUp ? '▲' : '▼'} ${Math.abs(ch).toFixed(2)}%
+            <div class="wl-item ${isActive ? 'active' : ''}" onclick="Watchlist.selectSymbol('${symbol}')">
+                <button class="wl-fav ${isFav ? 'active' : ''}"
+                        onclick="event.stopPropagation(); Watchlist.toggleFavorite('${symbol}')">
+                    ${isFav ? '★' : '☆'}
+                </button>
+                <div class="wl-symbol">${symbol}</div>
+                <div class="wl-data">
+                    <div class="wl-price">$${Utils.formatPrice(ticker.price || 0)}</div>
+                    <div class="wl-change ${isUp ? 'up' : 'down'}">
+                        ${isUp ? '+' : ''}${change.toFixed(2)}%
                     </div>
                 </div>
-                ${volStr && showingAll ? `<div class="wl-vol">${volStr}</div>` : ''}
             </div>
         `;
     },
 
-    _renderEmpty(searching) {
-        if (searching) {
-            return `<div class="wl-empty">No se encontró "${this._searchQuery}"${!this._allSymbolsLoaded ? '<br><small style="color:var(--cyan)">Cargando pares...</small>' : ''}</div>`;
+    _renderEmpty() {
+        if (this._searchQuery) {
+            return `<div class="wl-empty">No se encontró "${this._searchQuery}"</div>`;
         }
-        return '<div class="wl-empty">Sin monedas<br><small>Usá 🔍 para buscar</small></div>';
+        return `<div class="wl-empty">${this._loaded ? 'Sin monedas' : 'Cargando...'}</div>`;
     },
 
-    _fmtVol(v) {
-        if (!v || v <= 0) return '';
-        if (v >= 1e9) return `${(v / 1e9).toFixed(1)}B`;
-        if (v >= 1e6) return `${(v / 1e6).toFixed(0)}M`;
-        if (v >= 1e3) return `${(v / 1e3).toFixed(0)}K`;
-        return '';
-    },
-
-    subscribeToState() {
-        State.subscribe('prices', () => this.updatePrices());
-        State.subscribe('symbol', () => this.updateActive());
-    },
-
-    updatePrices() {
+    _updateActive() {
         document.querySelectorAll('.wl-item').forEach(item => {
-            const symbol = item.dataset.symbol;
-            const price = State.prices[symbol];
-            if (!price) return;
-
-            const priceEl = document.getElementById(`wl-price-${symbol}`);
-            const changeEl = document.getElementById(`wl-change-${symbol}`);
-
-            if (priceEl) {
-                const prev = this._prevPrices[symbol];
-                priceEl.textContent = `$${Utils.formatPrice(price.price)}`;
-                if (prev !== undefined && prev !== price.price) {
-                    const color = price.price > prev ? CONFIG.COLORS.green : CONFIG.COLORS.red;
-                    priceEl.style.transition = 'none';
-                    priceEl.style.color = color;
-                    requestAnimationFrame(() => {
-                        priceEl.style.transition = 'color 1.5s ease';
-                        priceEl.style.color = '';
-                    });
-                }
-            }
-            if (changeEl) {
-                const ch = price.change;
-                const isUp = ch >= 0;
-                changeEl.className = `wl-change ${isUp ? 'up' : 'down'}`;
-                changeEl.textContent = `${isUp ? '▲' : '▼'} ${Math.abs(ch).toFixed(2)}%`;
-            }
-            this._prevPrices[symbol] = price.price;
+            const symbol = item.querySelector('.wl-symbol')?.textContent;
+            item.classList.toggle('active', symbol === State.symbol);
         });
     },
 
-    updateActive() {
-        document.querySelectorAll('.wl-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.symbol === State.symbol);
-        });
+    // Share data with other components
+    getAllSymbols() {
+        return this._allSymbols;
     },
 
-    _selectTimeout: null,
-
-    selectSymbol(symbol) {
-        if (symbol === State.symbol) return;
-        if (this._selectTimeout) clearTimeout(this._selectTimeout);
-        if (typeof API !== 'undefined' && API.clearQueue) API.clearQueue();
-
-        // Dynamic symbol — inject price into State
-        if (!CONFIG.TOKENS[symbol]) {
-            const allData = this._allSymbols.find(s => s.symbol === symbol);
-            if (allData && !State.prices[symbol]) {
-                State.prices[symbol] = {
-                    price: allData.price, change: allData.change,
-                    volume: allData.volume, high24h: allData.high24h || allData.high,
-                    low24h: allData.low24h || allData.low,
-                };
-            }
-        }
-
-        State.set('symbol', symbol);
-        State.set('analysis', null);
-
-        if (typeof SymbolInfo !== 'undefined' && SymbolInfo.update) SymbolInfo.update();
-        if (typeof Analysis !== 'undefined' && Analysis.clear) Analysis.clear();
-        if (typeof Trading !== 'undefined' && Trading.disableButtons) Trading.disableButtons();
-
-        this._selectTimeout = setTimeout(() => {
-            if (typeof Trading !== 'undefined' && Trading.analyze) Trading.analyze();
-        }, 2000);
-    },
+    getTicker(symbol) {
+        return this._tickers[symbol];
+    }
 };

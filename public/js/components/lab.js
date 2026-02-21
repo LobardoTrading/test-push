@@ -1725,37 +1725,37 @@ const Lab = {
     // ═══════════════════════════════════════
 
     toggleAutonomy() {
-        if (typeof AutonomyBot === 'undefined') {
-            Utils.showNotification('AutonomyBot no disponible', 'error');
+        if (typeof Autonomy === 'undefined') {
+            Utils.showNotification('Autonomy no disponible', 'error');
             return;
         }
 
-        if (AutonomyBot._running) {
-            AutonomyBot.stop();
+        if (Autonomy._running) {
+            Autonomy.stop();
         } else {
-            AutonomyBot.start();
+            Autonomy.start();
         }
 
         this._updateAutonomyUI();
     },
 
     setAutonomyMode(mode) {
-        if (typeof AutonomyBot === 'undefined') return;
-        AutonomyBot._currentMode = mode;
+        if (typeof Autonomy === 'undefined') return;
+        Autonomy.setMode(mode);
         this._updateAutonomyUI();
     },
 
     _updateAutonomyUI() {
         const statusEl = document.getElementById('autonomyStatus');
         const btnEl = document.getElementById('btnAutonomyToggle');
-        const statsEl = document.getElementById('autonomyStats');
-        const modeSelect = document.getElementById('autonomyModeSelect');
+        const statsEl = document.getElementById('autonomyStatsPanel');
+        const modeSelect = document.getElementById('autonomyMode');
 
-        if (typeof AutonomyBot === 'undefined') return;
+        if (typeof Autonomy === 'undefined') return;
 
-        const running = AutonomyBot._running || false;
-        const mode = AutonomyBot._currentMode || 'moderate';
-        const fitness = AutonomyBot._lastFitness || 0;
+        const status = Autonomy.getStatus();
+        const running = status.running;
+        const mode = Autonomy._currentMode || 'moderate';
         const activeBots = this._getBots().filter(b => b.status === 'running').length;
 
         if (statusEl) {
@@ -1770,8 +1770,22 @@ const Lab = {
 
         if (statsEl) {
             statsEl.innerHTML = `
-                <span>Fitness: <b>${fitness.toFixed(1)}</b></span>
-                <span>Bots activos: <b>${activeBots}</b></span>
+                <div class="autonomy-stat">
+                    <span class="autonomy-stat-label">Nivel</span>
+                    <span class="autonomy-stat-value">L${status.level}</span>
+                </div>
+                <div class="autonomy-stat">
+                    <span class="autonomy-stat-label">Bots Activos</span>
+                    <span class="autonomy-stat-value">${activeBots}</span>
+                </div>
+                <div class="autonomy-stat">
+                    <span class="autonomy-stat-label">Auto Trades</span>
+                    <span class="autonomy-stat-value">${status.stats.totalTrades}</span>
+                </div>
+                <div class="autonomy-stat">
+                    <span class="autonomy-stat-label">Win Rate</span>
+                    <span class="autonomy-stat-value">${status.stats.winRate.toFixed(0)}%</span>
+                </div>
             `;
         }
 

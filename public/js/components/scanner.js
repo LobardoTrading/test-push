@@ -223,17 +223,20 @@ const Scanner = {
     },
 
     _bindSidebarTabs() {
-        document.querySelectorAll('.sidebar-tab').forEach(tab => {
+        // Only bind to left sidebar tabs
+        const leftSidebar = document.querySelector('.sidebar-left');
+        if (!leftSidebar) return;
+
+        leftSidebar.querySelectorAll('.sidebar-tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                const sidebar = tab.closest('.sidebar');
                 const tabName = tab.dataset.tab;
 
                 // Update tabs
-                sidebar.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+                leftSidebar.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
 
                 // Update content
-                sidebar.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
+                leftSidebar.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
                 const content = document.getElementById(`sidebar-${tabName}`);
                 if (content) content.classList.add('active');
 
@@ -256,9 +259,4 @@ const Scanner = {
     }
 };
 
-// Auto-init
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => Scanner.init());
-} else {
-    setTimeout(() => Scanner.init(), 500);
-}
+// Initialized by App.init()

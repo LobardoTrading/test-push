@@ -1496,6 +1496,124 @@
     text-align: center;
 }
 
+/* Enhanced Position Detail Sections */
+.pos-detail-section {
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.pos-detail-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cyan);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.pos-grid-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.pos-grid-label {
+    font-size: 9px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pos-grid-value {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text);
+}
+
+.pos-grid-value small {
+    font-size: 9px;
+    opacity: 0.7;
+}
+
+.pos-progress {
+    position: relative;
+    margin: 12px 0;
+    height: 6px;
+    background: var(--surface);
+    border-radius: 3px;
+    overflow: visible;
+}
+
+.pos-progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+.pos-progress-marker {
+    position: absolute;
+    top: -3px;
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    transform: translateX(-50%);
+}
+
+.pos-confidence-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.pos-bots-summary {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 10px;
+}
+
+.pos-bots-list {
+    color: var(--text);
+    margin-left: 8px;
+}
+
+.pos-hypothesis-section {
+    border-left: 3px solid var(--gold);
+}
+
+.pos-hypothesis-text {
+    font-size: 11px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.5;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.pos-stats-section {
+    border-left: 3px solid var(--cyan);
+}
+
 /* ==================== HYPOTHESIS & CONCLUSION ==================== */
 
 .hypothesis-box {

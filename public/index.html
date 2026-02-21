@@ -231,53 +231,15 @@
     </main>
 
     <!-- ═══════════════════════════════════════════════════════════
-         COCKPIT — Analytics Dashboard (Collapsible Sections)
+         COCKPIT — Performance Analytics
          ═══════════════════════════════════════════════════════════ -->
     <div class="dashboard-overlay" id="dashboardOverlay">
         <div class="dash-container">
             <div class="dash-header">
-                <div class="dash-header-left">
-                    <div class="dash-header-title">📊 Cockpit</div>
-                </div>
+                <div class="dash-title">Performance Cockpit</div>
                 <button class="dash-close" onclick="Dashboard.close()">✕</button>
             </div>
-            <div class="dash-body">
-                <!-- Performance Section -->
-                <div class="dash-section" id="dashPerformance">
-                    <div class="dash-section-header" onclick="Dashboard.toggleSection('performance')">
-                        <span>📈 Performance</span>
-                        <span class="dash-section-toggle">▼</span>
-                    </div>
-                    <div class="dash-section-content" id="dashPerformanceContent"></div>
-                </div>
-
-                <!-- Learning Section -->
-                <div class="dash-section" id="dashLearning">
-                    <div class="dash-section-header" onclick="Dashboard.toggleSection('learning')">
-                        <span>🧠 Learning Engine</span>
-                        <span class="dash-section-toggle">▼</span>
-                    </div>
-                    <div class="dash-section-content" id="dashLearningContent"></div>
-                </div>
-
-                <!-- Market Analysis Section -->
-                <div class="dash-section" id="dashMarket">
-                    <div class="dash-section-header" onclick="Dashboard.toggleSection('market')">
-                        <span>🌍 Market Overview</span>
-                        <span class="dash-section-toggle">▼</span>
-                    </div>
-                    <div class="dash-section-content" id="dashMarketContent"></div>
-                </div>
-
-                <!-- Recent Activity Section -->
-                <div class="dash-section" id="dashActivity">
-                    <div class="dash-section-header" onclick="Dashboard.toggleSection('activity')">
-                        <span>📋 Recent Activity</span>
-                        <span class="dash-section-toggle">▼</span>
-                    </div>
-                    <div class="dash-section-content" id="dashActivityContent"></div>
-                </div>
-            </div>
+            <div class="dash-body" id="dashboardContent"></div>
         </div>
     </div>
 
