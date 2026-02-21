@@ -1,0 +1,207 @@
+/* ========================================
+   MULTI-TIMEFRAME STYLES
+   TheRealShortShady v4.1
+   ======================================== */
+
+.mtf-section {
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.015);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px;
+}
+
+.mtf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.mtf-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.mtf-alignment {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ========== GAUGE ========== */
+
+.mtf-gauge {
+    margin-bottom: 14px;
+}
+
+.mtf-gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 4px;
+}
+
+.mtf-gauge-track {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 4px;
+    overflow: visible;
+}
+
+.mtf-gauge-center {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: rgba(255,255,255,0.15);
+}
+
+.mtf-gauge-needle {
+    position: absolute;
+    top: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 8px currentColor;
+    transition: left 0.6s ease;
+}
+
+.mtf-gauge-score {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 6px;
+}
+
+/* ========== TF CARDS ========== */
+
+.mtf-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.mtf-card {
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+
+.mtf-card:hover {
+    border-color: rgba(255,255,255,0.08);
+}
+
+.mtf-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.mtf-card-role {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mtf-card-tf {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--cyan);
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--gold-dim);
+    padding: 1px 8px;
+    border-radius: 4px;
+}
+
+.mtf-card-trend {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 6px;
+}
+
+/* Strength bar */
+.mtf-card-bar {
+    margin-bottom: 8px;
+}
+
+.mtf-card-bar-track {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.mtf-card-bar-center {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: rgba(255,255,255,0.1);
+}
+
+.mtf-card-bar-fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 2px;
+    transition: all 0.4s ease;
+}
+
+/* Details row */
+.mtf-card-details {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.mtf-card-details b {
+    font-weight: 600;
+}
+
+.mtf-card-reasons {
+    margin-top: 6px;
+    font-size: 9px;
+    color: var(--dim);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.4;
+}
+
+/* ========== ALIGNMENT DETAILS ========== */
+
+.mtf-details {
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.mtf-detail-item {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    padding: 2px 0;
+    line-height: 1.4;
+}

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="TheRealShortShady — Premium Crypto Trading Terminal">
+    <meta name="theme-color" content="#060911">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>TheRealShortShady · Terminal</title>
+
+    <link rel="preconnect" href="https://fapi.binance.com">
+    <link rel="preconnect" href="https://api.binance.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/multi-tf.css">
+    <link rel="stylesheet" href="css/ui-enhancements.css">
+    <link rel="stylesheet" href="css/theme-v5.css">
+    <link rel="stylesheet" href="css/fixes-v43.css">
+    <link rel="stylesheet" href="css/ui-reorg.css">
+</head>
+<body>
+
+    <div class="ambient-bg"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Header -->
+    <header class="header" id="header"></header>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Left Panel -->
+        <div class="panel left-panel">
+            <div class="left-tabs" role="tablist" aria-label="Paneles de navegación">
+                <button class="left-tab active" data-tab="watchlist" role="tab" aria-selected="true" aria-controls="tab-watchlist" id="tab-btn-watchlist">Markets</button>
+                <button class="left-tab" data-tab="positions" role="tab" aria-selected="false" aria-controls="tab-positions" id="tab-btn-positions">Posiciones</button>
+                <button class="left-tab" data-tab="bots" role="tab" aria-selected="false" aria-controls="tab-bots" id="tab-btn-bots">🤖 Bots</button>
+                <button class="left-tab" data-tab="activity" role="tab" aria-selected="false" aria-controls="tab-activity" id="tab-btn-activity">Activity</button>
+            </div>
+
+            <!-- Markets Tab: Watchlist + Radar -->
+            <div class="left-tab-content active" id="tab-watchlist" role="tabpanel" aria-labelledby="tab-btn-watchlist">
+                <div class="watchlist" id="watchlist"></div>
+                <div class="radar-section">
+                    <div class="radar-header">
+                        <div class="radar-title">
+                            <span class="panel-title-icon">🎯</span> Radar
+                        </div>
+                        <div class="radar-status" id="radarStatus">--</div>
+                    </div>
+                    <div class="radar-summary" id="radarSummary"></div>
+                    <div class="radar-list" id="radarList"></div>
+                </div>
+            </div>
+
+            <!-- Positions Tab: Positions + Risk Manager -->
+            <div class="left-tab-content" id="tab-positions" role="tabpanel" aria-labelledby="tab-btn-positions">
+                <div class="panel-title" id="positionsTitle">
+                    <span class="panel-title-icon">◈</span> Posiciones (0/3)
+                </div>
+                <div class="positions-container" id="positions"></div>
+                <div id="riskManagerPanel"></div>
+            </div>
+
+            <!-- Bots Tab: Unified Bot Control -->
+            <div class="left-tab-content" id="tab-bots" role="tabpanel" aria-labelledby="tab-btn-bots">
+                <div id="botsPanel"></div>
+            </div>
+
+            <!-- Activity Tab: Trade Log + Events -->
+            <div class="left-tab-content" id="tab-activity" role="tabpanel" aria-labelledby="tab-btn-activity">
+                <div class="panel-title">
+                    <span class="panel-title-icon">◈</span> Activity
+                </div>
+                <div class="activity-section">
+                    <div class="activity-subsection">
+                        <div class="activity-subtitle">📊 Trade Log</div>
+                        <div class="tradelog-container" id="tradeLog"></div>
+                    </div>
+                    <div class="activity-subsection">
+                        <div class="activity-subtitle">📋 Events</div>
+                        <div class="ef-container-inline" id="eventFeedInline"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - Chart & Actions -->
+        <div class="center-panel">
+            <div class="symbol-info">
+                <div class="symbol-main">
+                    <div class="symbol-name" id="symbolName">BTCUSDT</div>
+                    <div class="symbol-sector" id="symbolSector">Bitcoin · Store of Value · Grado A</div>
+                </div>
+                <div class="symbol-price-group">
+                    <div class="current-price" id="currentPrice">$0.00</div>
+                    <div class="price-change up" id="priceChange">▲ 0.00%</div>
+                </div>
+                <div class="symbol-meta">
+                    <span id="symbolVolume" class="symbol-meta-item"></span>
+                    <span id="symbolRange" class="symbol-meta-item"></span>
+                </div>
+                <div class="tf-selector">
+                    <label>TF:</label>
+                    <select id="tfSelect">
+                        <option value="1m">1m</option>
+                        <option value="3m">3m</option>
+                        <option value="5m">5m</option>
+                        <option value="15m" selected>15m</option>
+                        <option value="30m">30m</option>
+                        <option value="1h">1h</option>
+                        <option value="2h">2h</option>
+                        <option value="4h">4h</option>
+                        <option value="1d">1d</option>
+                        <option value="1w">1w</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+
+            <div class="indicators-bar">
+                <div class="indicator-item"><span class="indicator-label">RSI</span><span class="indicator-value" id="indRSI">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">EMA9</span><span class="indicator-value" id="indEMA9">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">EMA21</span><span class="indicator-value" id="indEMA21">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">ATR</span><span class="indicator-value" id="indATR">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">MACD</span><span class="indicator-value" id="indMACD">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">Stoch</span><span class="indicator-value" id="indStoch">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">BB</span><span class="indicator-value" id="indBB">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">Vol</span><span class="indicator-value" id="indVolRatio">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">Trend</span><span class="indicator-value" id="indTrend">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">Señal</span><span class="indicator-value" id="indSignal">--</span></div>
+                <div class="indicator-item"><span class="indicator-label">Diverg.</span><span class="indicator-value" id="indDivergence">--</span></div>
+            </div>
+
+            <!-- Position Config Panel (Binance Futures style) -->
+            <div id="positionConfigPanel"></div>
+
+            <div class="actions-bar">
+                <button class="btn btn-analyze" id="btnAnalyze" title="Ctrl+Enter">
+                    <span class="btn-icon">⚡</span> Analizar
+                </button>
+                <button class="btn btn-long" id="btnLong" disabled>
+                    <span class="btn-icon">▲</span> LONG
+                </button>
+                <button class="btn btn-short" id="btnShort" disabled>
+                    <span class="btn-icon">▼</span> SHORT
+                </button>
+                <button class="btn btn-watcher" id="btnWatcher" title="Monitorear y entrar automáticamente">
+                    <span class="btn-icon">👁</span> <span id="btnWatcherText">Esperar</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel - Analysis + Learning + Liquidity -->
+        <div class="panel right-panel">
+            <div class="panel-title">
+                <span class="panel-title-icon">◈</span> Análisis
+            </div>
+            <div class="analysis-container" id="analysisPanel"></div>
+
+            <!-- Liquidity Heatmap Section -->
+            <div class="right-section" id="liquiditySection">
+                <div class="section-header">
+                    <span>🔥 Liquidity Heatmap</span>
+                </div>
+                <div id="liquidityHeatmap"></div>
+            </div>
+
+            <!-- Learning Stats Section -->
+            <div class="right-section" id="learningSection">
+                <div class="section-header">
+                    <span>🧠 Learning Stats</span>
+                </div>
+                <div id="learningStats"></div>
+            </div>
+
+            <!-- Quick Performance Section -->
+            <div class="right-section" id="performanceSection">
+                <div class="section-header">
+                    <span>📈 Performance</span>
+                </div>
+                <div id="quickPerformance"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Dashboard Cockpit -->
+    <div class="dashboard-overlay" id="dashboardOverlay">
+        <div class="dash-header">
+            <div class="dash-header-left">
+                <div class="dash-header-title">⚡ Cockpit</div>
+                <div class="dash-header-sub">TheRealShortShady</div>
+            </div>
+            <button class="dash-close" onclick="Dashboard.close()">✕</button>
+        </div>
+        <div class="dash-content" id="dashboardContent"></div>
+    </div>
+
+    <!-- LAB Modal -->
+    <div class="lab-overlay" id="labOverlay">
+        <div class="lab-container">
+            <div class="lab-header">
+                <div class="lab-title">🧪 LAB — Bots Autónomos</div>
+                <button class="lab-close" onclick="Lab.close()">✕</button>
+            </div>
+            <div class="lab-toolbar">
+                <button class="btn btn-analyze" onclick="Lab.showCreateModal()" style="padding:8px 16px; font-size:11px;">
+                    + Nuevo Bot
+                </button>
+                <div class="lab-global-stats" id="labGlobalStats"></div>
+            </div>
+            <div class="lab-bots-grid" id="labBotsGrid"></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⚙ Configuración</h3>
+                <button class="modal-close" onclick="SettingsModal.close()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label class="setting-label">Tamaño de Wallet (USDT)</label>
+                    <input type="number" id="settingWalletSize" class="setting-input" min="100" max="10000000" step="100" value="10000">
+                    <span class="setting-hint">Balance inicial para paper trading</span>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Máximo de Posiciones</label>
+                    <select id="settingMaxPositions" class="setting-input">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3" selected>3</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Refresh Rate</label>
+                    <select id="settingRefreshRate" class="setting-input">
+                        <option value="1s">1s — Ultra rápido</option>
+                        <option value="2s">2s — Rápido</option>
+                        <option value="5s" selected>5s — Normal</option>
+                        <option value="10s">10s — Moderado</option>
+                        <option value="30s">30s — Lento</option>
+                        <option value="1m">1m — Muy lento</option>
+                        <option value="5m">5m — Mínimo</option>
+                        <option value="15m">15m — Bajo consumo</option>
+                        <option value="1h">1h — Background</option>
+                    </select>
+                    <span class="setting-hint">Frecuencia de actualización de precios y velas</span>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Timezone</label>
+                    <input type="text" class="setting-input" value="Buenos Aires (UTC-3)" disabled>
+                </div>
+                <div class="setting-actions">
+                    <button class="btn btn-analyze" onclick="SettingsModal.apply()">Aplicar</button>
+                    <button class="btn btn-short" onclick="SettingsModal.resetWallet()" style="flex:none; width:auto; padding:11px 20px;">Reset Wallet</button>
+                    <button class="btn btn-short" onclick="SettingsModal.clearHistory()" style="flex:none; width:auto; padding:11px 20px;">Borrar Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (ordered for dependencies) -->
+    <script src="js/config.js"></script>
+    <script src="js/utils/formatters.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/utils/indicators.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/components/header.js"></script>
+    <script src="js/components/watchlist.js"></script>
+    <script src="js/components/positions.js"></script>
+    <script src="js/components/symbol-info.js"></script>
+    <script src="js/components/chart.js"></script>
+    <script src="js/components/analysis.js"></script>
+    <script src="js/components/trading.js"></script>
+    <script src="js/components/tradelog.js"></script>
+    <script src="js/components/settings.js"></script>
+    <script src="js/components/multi-tf.js"></script>
+    <script src="js/components/market-pulse.js"></script>
+    <script src="js/components/indicators-pro.js"></script>
+    <script src="js/components/quick-stats.js"></script>
+    <script src="js/components/master-bots.js"></script>
+    <script src="js/components/intelligence.js"></script>
+    <script src="js/components/smart-engine.js"></script>
+    <script src="js/components/risk-manager.js"></script>
+    <script src="js/components/learning-engine.js"></script>
+    <script src="js/components/event-feed.js"></script>
+    <script src="js/components/signal-pipeline.js"></script>
+    <script src="js/components/autonomy.js"></script>
+    <script src="js/components/lab.js"></script>
+    <script src="js/components/liquidity-heatmap.js"></script>
+    <script src="js/components/learning-stats.js"></script>
+    <script src="js/components/quick-performance.js"></script>
+    <script src="js/components/bots-panel.js"></script>
+    <script src="js/components/dashboard.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

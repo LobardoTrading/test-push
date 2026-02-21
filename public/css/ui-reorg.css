@@ -1,0 +1,653 @@
+/* ========================================
+   UI REORGANIZATION — New Layout Styles
+   TheRealShortShady v5.0
+   ======================================== */
+
+/* ==================== BOTS PANEL ==================== */
+
+.bots-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px;
+}
+
+.bots-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.bots-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border);
+}
+
+.bots-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.bots-section-status {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bots-section-status.active {
+    background: var(--green-bg);
+    color: var(--green);
+}
+
+.bots-section-status.inactive {
+    background: rgba(100, 100, 100, 0.2);
+    color: var(--dim);
+}
+
+.bots-section-count {
+    font-size: 10px;
+    color: var(--gold);
+    font-family: var(--font-mono);
+}
+
+.bots-section-body {
+    padding: 10px 12px;
+}
+
+.bots-section-actions {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-bot {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-bot.btn-start {
+    background: var(--green-bg);
+    color: var(--green);
+}
+
+.btn-bot.btn-start:hover {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.btn-bot.btn-stop {
+    background: var(--red-bg);
+    color: var(--red);
+}
+
+.btn-bot.btn-stop:hover {
+    background: rgba(244, 63, 94, 0.3);
+}
+
+.btn-bot.btn-lab {
+    background: var(--gold-dim);
+    color: var(--gold);
+}
+
+.btn-bot.btn-lab:hover {
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.bot-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    padding: 3px 0;
+    color: var(--text-secondary);
+}
+
+.bot-info-label {
+    color: var(--dim);
+}
+
+.bot-info-value {
+    font-weight: 500;
+}
+
+.bot-info-value.mode-aggressive {
+    color: var(--red);
+}
+
+.bot-info-value.mode-moderate {
+    color: var(--yellow);
+}
+
+.bot-info-value.mode-conservative {
+    color: var(--green);
+}
+
+.bots-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bots-empty {
+    font-size: 10px;
+    color: var(--dim);
+    text-align: center;
+    padding: 8px;
+}
+
+.bot-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 10px;
+}
+
+.bot-mini-card.active {
+    border-left: 2px solid var(--green);
+}
+
+.bot-mini-card.inactive {
+    opacity: 0.6;
+    border-left: 2px solid var(--dim);
+}
+
+.bot-mini-card.master {
+    border-left: 2px solid var(--gold);
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.bot-mini-name {
+    flex: 1;
+    color: var(--text);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bot-mini-stats {
+    display: flex;
+    gap: 8px;
+    font-family: var(--font-mono);
+}
+
+.bot-mini-wr {
+    color: var(--gold);
+}
+
+.bot-mini-trades {
+    color: var(--dim);
+}
+
+.bot-mini-pnl {
+    font-weight: 600;
+}
+
+.bot-mini-pnl.positive {
+    color: var(--green);
+}
+
+.bot-mini-pnl.negative {
+    color: var(--red);
+}
+
+.bot-mini-status {
+    font-size: 8px;
+}
+
+.bot-mini-status.on {
+    color: var(--green);
+}
+
+.bot-mini-status.off {
+    color: var(--dim);
+}
+
+.bots-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px;
+    background: var(--card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.bots-stat-item {
+    text-align: center;
+}
+
+.bots-stat-label {
+    display: block;
+    font-size: 8px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.bots-stat-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font-mono);
+}
+
+.bots-stat-value.positive {
+    color: var(--green);
+}
+
+.bots-stat-value.negative {
+    color: var(--red);
+}
+
+/* ==================== LIQUIDITY HEATMAP ==================== */
+
+.liq-content {
+    padding: 8px;
+}
+
+.liq-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--dim);
+    font-size: 10px;
+}
+
+.liq-imbalance {
+    margin-bottom: 10px;
+}
+
+.liq-imbalance-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.liq-bid-bar {
+    background: linear-gradient(90deg, var(--green-bg), var(--green));
+    transition: width 0.5s ease;
+}
+
+.liq-ask-bar {
+    background: linear-gradient(90deg, var(--red), var(--red-bg));
+    transition: width 0.5s ease;
+}
+
+.liq-imbalance-label {
+    text-align: center;
+    font-size: 9px;
+    color: var(--dim);
+    margin-top: 4px;
+}
+
+.liq-imbalance.bullish .liq-imbalance-label {
+    color: var(--green);
+}
+
+.liq-imbalance.bearish .liq-imbalance-label {
+    color: var(--red);
+}
+
+.liq-walls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.liq-no-walls {
+    font-size: 9px;
+    color: var(--dim);
+    text-align: center;
+    padding: 4px;
+}
+
+.liq-wall {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    font-size: 9px;
+}
+
+.liq-wall.support {
+    border-left: 2px solid var(--green);
+}
+
+.liq-wall.resistance {
+    border-left: 2px solid var(--red);
+}
+
+.liq-wall-type {
+    font-size: 8px;
+}
+
+.liq-wall-price {
+    flex: 1;
+    color: var(--text);
+    font-family: var(--font-mono);
+}
+
+.liq-wall-dist {
+    color: var(--dim);
+}
+
+.liq-wall-vol {
+    color: var(--gold);
+    font-family: var(--font-mono);
+}
+
+.liq-heatmap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.liq-asks, .liq-bids {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.liq-zone {
+    height: 4px;
+    border-radius: 1px;
+    min-width: 20px;
+}
+
+.liq-price-line {
+    text-align: center;
+    padding: 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold);
+    font-family: var(--font-mono);
+}
+
+/* ==================== LEARNING STATS ==================== */
+
+.ls-content {
+    padding: 8px;
+}
+
+.ls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ls-row:last-child {
+    border-bottom: none;
+}
+
+.ls-label {
+    font-size: 10px;
+    color: var(--dim);
+}
+
+.ls-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font-mono);
+}
+
+.ls-value.good {
+    color: var(--green);
+}
+
+.ls-value.neutral {
+    color: var(--yellow);
+}
+
+.ls-value.bad {
+    color: var(--red);
+}
+
+.ls-value.significant {
+    color: var(--green);
+}
+
+.ls-value.not-significant {
+    color: var(--yellow);
+}
+
+.ls-value.positive {
+    color: var(--green);
+}
+
+.ls-value.negative {
+    color: var(--red);
+}
+
+.ls-ci {
+    font-size: 8px;
+    color: var(--dim);
+    margin-left: 4px;
+}
+
+.ls-sub {
+    font-size: 8px;
+    color: var(--dim);
+    margin-left: 4px;
+}
+
+.ls-retrain {
+    color: var(--gold);
+}
+
+/* ==================== QUICK PERFORMANCE ==================== */
+
+.qp-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 8px;
+}
+
+.qp-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.qp-label {
+    font-size: 8px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.qp-value {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text);
+}
+
+.qp-value.excellent {
+    color: var(--gold);
+}
+
+.qp-value.good {
+    color: var(--green);
+}
+
+.qp-value.neutral {
+    color: var(--yellow);
+}
+
+.qp-value.warn {
+    color: var(--yellow);
+}
+
+.qp-value.bad {
+    color: var(--red);
+}
+
+.qp-value.positive {
+    color: var(--green);
+}
+
+.qp-value.negative {
+    color: var(--red);
+}
+
+/* ==================== RIGHT PANEL SECTIONS ==================== */
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.right-section {
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.section-header {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold);
+    padding: 0 8px 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ==================== ACTIVITY TAB ==================== */
+
+.activity-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px;
+}
+
+.activity-subsection {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.activity-subtitle {
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text);
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border);
+}
+
+.activity-subsection .tradelog-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.ef-container-inline {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.ef-empty-inline {
+    text-align: center;
+    padding: 12px;
+    color: var(--dim);
+    font-size: 10px;
+}
+
+.ef-event-compact {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 9px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ef-event-compact:last-child {
+    border-bottom: none;
+}
+
+.ef-icon-sm {
+    flex-shrink: 0;
+    font-size: 10px;
+}
+
+.ef-msg-sm {
+    flex: 1;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ef-time-sm {
+    color: var(--dim);
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+}
+
+/* ==================== RADAR SECTION IN MARKETS TAB ==================== */
+
+.radar-section {
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+.radar-section .radar-header {
+    padding: 0 8px 8px 8px;
+}
+
+.radar-section .radar-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ==================== RESPONSIVE ADJUSTMENTS ==================== */
+
+@media (max-width: 1400px) {
+    .qp-content {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+    .bots-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

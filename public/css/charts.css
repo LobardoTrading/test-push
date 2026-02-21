@@ -1,0 +1,401 @@
+/* ========================================
+   CHARTS — Black Label Terminal
+   Premium Chart Styles v3.0
+   ======================================== */
+
+/* ==========================================
+   CHART CONTAINER
+   ========================================== */
+
+.chart-container {
+    flex: 1;
+    background: var(--bg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    position: relative;
+    min-height: 350px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-top: none;
+}
+
+.chart-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0, 212, 255, 0.015) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.chart-container:fullscreen {
+    border-radius: 0;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+#chart {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+}
+
+/* ==========================================
+   CHART TOOLBAR
+   ========================================== */
+
+.chart-toolbar {
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    align-items: center;
+    pointer-events: none;
+}
+
+.chart-toolbar button {
+    pointer-events: auto;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border);
+    background: rgba(6, 6, 10, 0.7);
+    color: var(--dim);
+    transition: var(--transition-fast);
+    line-height: 1.4;
+    backdrop-filter: blur(8px);
+    text-transform: uppercase;
+}
+
+.chart-toolbar button:hover {
+    border-color: rgba(0, 212, 255, 0.25);
+    color: var(--gold);
+    background: rgba(12, 12, 20, 0.85);
+}
+
+.chart-toolbar button.active {
+    border-color: rgba(0, 212, 255, 0.35);
+    color: var(--gold);
+    background: rgba(0, 212, 255, 0.08);
+}
+
+/* ==========================================
+   CHART OVERLAY (legacy)
+   ========================================== */
+
+.chart-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.chart-overlay-btn {
+    background: rgba(12, 12, 20, 0.8);
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: var(--transition);
+    backdrop-filter: blur(8px);
+}
+
+.chart-overlay-btn:hover {
+    color: var(--text);
+    background: rgba(12, 12, 20, 0.95);
+}
+
+.chart-overlay-btn.active {
+    color: var(--gold);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+}
+
+/* ==========================================
+   CHART LEGEND
+   ========================================== */
+
+.chart-legend {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(12, 12, 20, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 10px;
+    z-index: 10;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+}
+
+.chart-legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.chart-legend-color {
+    width: 16px;
+    height: 2px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* ==========================================
+   PRICE LABELS
+   ========================================== */
+
+.chart-price-label {
+    position: absolute;
+    right: 5px;
+    background: var(--gold);
+    color: #060911;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+    transform: translateY(-50%);
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.2);
+}
+
+.chart-tp-label {
+    background: var(--green);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.chart-sl-label {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(244, 63, 94, 0.2);
+}
+
+.chart-liq-label {
+    background: var(--yellow);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+/* ==========================================
+   CROSSHAIR
+   ========================================== */
+
+.chart-crosshair {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.crosshair-x, .crosshair-y {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.crosshair-x { width: 1px; height: 100%; }
+.crosshair-y { width: 100%; height: 1px; }
+
+.crosshair-label {
+    position: absolute;
+    background: var(--surface);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================
+   VOLUME
+   ========================================== */
+
+.volume-container {
+    height: 60px;
+    background: var(--bg);
+    border-top: 1px solid var(--border-subtle);
+    position: relative;
+}
+
+/* ==========================================
+   CHART LOADING & ERROR
+   ========================================== */
+
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+
+.chart-loading::after {
+    content: '';
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: chartSpin 0.8s linear infinite;
+}
+
+@keyframes chartSpin {
+    to { transform: rotate(360deg); }
+}
+
+.chart-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--red);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ==========================================
+   INDICATOR LINES
+   ========================================== */
+
+.indicator-line {
+    stroke-width: 1.5;
+    fill: none;
+}
+
+.indicator-ema9 { stroke: var(--blue); }
+.indicator-ema21 { stroke: var(--orange); }
+.indicator-ema50 { stroke: var(--purple); }
+
+.indicator-bb-upper,
+.indicator-bb-lower {
+    stroke: rgba(94, 187, 255, 0.2);
+    stroke-dasharray: 3 3;
+}
+
+.indicator-bb-middle {
+    stroke: rgba(94, 187, 255, 0.35);
+}
+
+/* ==========================================
+   ZOOM CONTROLS
+   ========================================== */
+
+.chart-zoom-controls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+}
+
+.zoom-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border);
+    background: rgba(12, 12, 20, 0.8);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: var(--transition);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-btn:hover {
+    color: var(--gold);
+    border-color: rgba(0, 212, 255, 0.25);
+    background: rgba(12, 12, 20, 0.95);
+}
+
+/* ==========================================
+   TRADE MARKERS
+   ========================================== */
+
+.trade-marker {
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.trade-marker-buy { fill: var(--green); }
+.trade-marker-sell { fill: var(--red); }
+.trade-marker:hover { filter: brightness(1.3); }
+
+/* ==========================================
+   CHART ANNOTATION
+   ========================================== */
+
+.chart-annotation {
+    position: absolute;
+    background: var(--surface);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    color: var(--text);
+    border-left: 2px solid var(--gold);
+    max-width: 200px;
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow);
+}
+
+/* ==========================================
+   MINI CHART
+   ========================================== */
+
+.mini-chart {
+    width: 60px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 768px) {
+    .chart-container { min-height: 260px; }
+    .chart-toolbar { top: 4px; left: 6px; right: 6px; gap: 2px; }
+    .chart-toolbar button { padding: 2px 6px; font-size: 8px; }
+    .chart-legend { display: none; }
+    .chart-zoom-controls { bottom: 8px; right: 8px; }
+    .zoom-btn { width: 26px; height: 26px; font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+    .chart-container { min-height: 220px; border-radius: 0; }
+    .chart-toolbar button { padding: 2px 5px; font-size: 7px; }
+}
