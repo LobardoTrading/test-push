@@ -104,31 +104,32 @@ const ClientAnalyzer = {
 
     _calculateIndicators(closes, highs, lows, volumes) {
         const len = closes.length;
-        const price = closes[len - 1];
+        const price = closes[len - 1] || 0;
 
-        // EMAs
-        const ema9 = Indicators.ema(closes, 9);
-        const ema21 = Indicators.ema(closes, 21);
-        const ema50 = Indicators.ema(closes, 50);
+        // EMAs - with fallbacks
+        const ema9 = Indicators.ema(closes, 9) || price;
+        const ema21 = Indicators.ema(closes, 21) || price;
+        const ema50 = Indicators.ema(closes, 50) || price;
 
-        // RSI
-        const rsi = Indicators.rsi(closes, 14);
+        // RSI - default to neutral
+        const rsi = Indicators.rsi(closes, 14) || 50;
 
-        // MACD
-        const macdData = Indicators.macd(closes);
-        const macd = macdData.macd;
-        const signal = macdData.signal;
-        const histogram = macdData.histogram;
+        // MACD - with fallbacks
+        const macdData = Indicators.macd(closes) || { macd: 0, signal: 0, histogram: 0 };
+        const macd = macdData.macd || 0;
+        const signal = macdData.signal || 0;
+        const histogram = macdData.histogram || 0;
 
         // Bollinger Bands
-        const bb = Indicators.bollingerBands(closes, 20, 2);
+        const bb = Indicators.bollingerBands(closes, 20, 2) || null;
 
         // ATR
-        const atr = this._calculateATR(highs, lows, closes, 14);
+        const atr = this._calculateATR(highs, lows, closes, 14) || 0;
 
-        // Volume analysis
-        const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-        const currentVolume = volumes[len - 1];
+        // Volume analysis - with safety checks
+        const volSlice = volumes.slice(-20);
+        const avgVolume = volSlice.length > 0 ? volSlice.reduce((a, b) => a + (b || 0), 0) / volSlice.length : 1;
+        const currentVolume = volumes[len - 1] || 0;
         const volumeRatio = avgVolume > 0 ? currentVolume / avgVolume : 1;
 
         // Trend
@@ -197,17 +198,18 @@ const ClientAnalyzer = {
         }
 
         // 2. RSI (20 points max)
-        if (ind.rsi < 30) {
+        const rsiVal = ind.rsi || 50;
+        if (rsiVal < 30) {
             bullScore += 15;
-            reasons.push({ type: 'bull', weight: 15, text: `RSI sobreventa (${ind.rsi.toFixed(0)})` });
-        } else if (ind.rsi < 40) {
+            reasons.push({ type: 'bull', weight: 15, text: `RSI sobreventa (${Math.round(rsiVal)})` });
+        } else if (rsiVal < 40) {
             bullScore += 8;
-        } else if (ind.rsi > 70) {
+        } else if (rsiVal > 70) {
             bearScore += 15;
-            reasons.push({ type: 'bear', weight: 15, text: `RSI sobrecompra (${ind.rsi.toFixed(0)})` });
-        } else if (ind.rsi > 60) {
+            reasons.push({ type: 'bear', weight: 15, text: `RSI sobrecompra (${Math.round(rsiVal)})` });
+        } else if (rsiVal > 60) {
             bearScore += 8;
-        } else if (ind.rsi >= 45 && ind.rsi <= 55) {
+        } else if (rsiVal >= 45 && rsiVal <= 55) {
             // Neutral RSI
         }
 
@@ -236,10 +238,11 @@ const ClientAnalyzer = {
         }
 
         // 5. Volume (10 points max)
-        if (ind.volumeRatio > 1.5) {
+        const volRatio = ind.volumeRatio || 1;
+        if (volRatio > 1.5) {
             if (ind.trend === 'UP') bullScore += 8;
             else if (ind.trend === 'DOWN') bearScore += 8;
-            reasons.push({ type: 'neutral', weight: 8, text: `Volumen alto (${ind.volumeRatio.toFixed(1)}x)` });
+            reasons.push({ type: 'neutral', weight: 8, text: `Volumen alto (${volRatio.toFixed(1)}x)` });
         }
 
         // 6. Trend alignment (10 points max)
@@ -277,7 +280,10 @@ const ClientAnalyzer = {
     },
 
     _calculateLevels(price, direction, leverage, timeframe, highs, lows) {
-        const atr = this._calculateATR(highs, lows, highs, 14); // Use highs as closes proxy
+        // Safety checks
+        const safePrice = price || 100;
+        const safeLev = leverage || 10;
+        const atr = this._calculateATR(highs, lows, highs, 14) || 0;
 
         const mults = this._atrMultipliers[timeframe] || this._atrMultipliers['15m'];
         const fallback = this._fallbackPct[timeframe] || this._fallbackPct['15m'];
@@ -288,8 +294,8 @@ const ClientAnalyzer = {
             tpDist = atr * mults.tp;
             slDist = atr * mults.sl;
         } else {
-            tpDist = price * fallback.tp;
-            slDist = price * fallback.sl;
+            tpDist = safePrice * fallback.tp;
+            slDist = safePrice * fallback.sl;
         }
 
         // Ensure minimum R:R of 2:1
@@ -300,20 +306,20 @@ const ClientAnalyzer = {
         let tp, sl, liq;
 
         if (direction === 'LONG') {
-            tp = price + tpDist;
-            sl = price - slDist;
-            liq = price * (1 - 0.996 / leverage);
+            tp = safePrice + tpDist;
+            sl = safePrice - slDist;
+            liq = safePrice * (1 - 0.996 / safeLev);
         } else {
-            tp = price - tpDist;
-            sl = price + slDist;
-            liq = price * (1 + 0.996 / leverage);
+            tp = safePrice - tpDist;
+            sl = safePrice + slDist;
+            liq = safePrice * (1 + 0.996 / safeLev);
         }
 
-        // Round to appropriate precision
-        const decimals = this._getPrecision(price);
-        tp = parseFloat(tp.toFixed(decimals));
-        sl = parseFloat(sl.toFixed(decimals));
-        liq = parseFloat(liq.toFixed(decimals));
+        // Round to appropriate precision - with safety
+        const decimals = this._getPrecision(safePrice);
+        tp = parseFloat((tp || 0).toFixed(decimals));
+        sl = parseFloat((sl || 0).toFixed(decimals));
+        liq = parseFloat((liq || 0).toFixed(decimals));
 
         return { tp, sl, liq, atr };
     },
