@@ -46,6 +46,27 @@ const Dashboard = {
         const bots = typeof Lab !== 'undefined' ? Lab._getBots() : [];
         const stats = this._calcStats(bots);
 
+        // Show helpful state when no data
+        if (bots.length === 0 || stats.totalTrades === 0) {
+            container.innerHTML = `
+                <div class="cockpit-empty">
+                    <div class="cockpit-empty-icon">📊</div>
+                    <div class="cockpit-empty-title">Performance Analytics</div>
+                    <div class="cockpit-empty-desc">
+                        ${bots.length === 0
+                            ? 'Creá bots en el LAB para ver estadísticas de performance aquí.'
+                            : 'Tus bots aún no tienen trades completados. Las estadísticas aparecerán cuando haya datos.'}
+                    </div>
+                    <div class="cockpit-empty-tips">
+                        <div class="cockpit-tip">💡 Usá <strong>Analizar</strong> para evaluar oportunidades de trading</div>
+                        <div class="cockpit-tip">🤖 Creá bots en el <strong>LAB</strong> para trading autónomo</div>
+                        <div class="cockpit-tip">📈 Este dashboard mostrará métricas como Sharpe Ratio, Sortino, Win Rate, etc.</div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
         container.innerHTML = `
             <!-- Key Metrics Row -->
             <div class="cockpit-metrics">

@@ -35,12 +35,13 @@ const Chart = {
         ema9: true,
         ema21: true,
         ema50: false,
-        bb: true,
+        bb: false,          // Disabled by default - less clutter
         volume: true,
-        rsiPanel: true,
+        rsiPanel: false,    // Disabled by default - less clutter
         macdPanel: false,
         positions: true,
-        tpsl: true,
+        tpsl: true,         // Basic TP/SL lines only
+        prediction: false,  // Advanced prediction visualization - OFF by default
         vwap: false,
     },
 
@@ -125,12 +126,9 @@ const Chart = {
         const indicators = [
             { key: 'ema9', label: 'EMA9', color: CONFIG.CHART.COLORS.ema9 },
             { key: 'ema21', label: 'EMA21', color: CONFIG.CHART.COLORS.ema21 },
-            { key: 'ema50', label: 'EMA50', color: CONFIG.CHART.COLORS.ema50 },
             { key: 'bb', label: 'BB', color: 'rgba(0,212,255,0.6)' },
-            { key: 'vwap', label: 'VWAP', color: '#ff6b9d' },
             { key: 'volume', label: 'VOL', color: 'rgba(255,255,255,0.5)' },
             { key: 'rsiPanel', label: 'RSI', color: '#eab308' },
-            { key: 'macdPanel', label: 'MACD', color: '#22c55e' },
         ];
 
         indicators.forEach(ind => {
@@ -198,9 +196,11 @@ const Chart = {
         e.preventDefault();
         const delta = Math.sign(e.deltaY);
         if (e.shiftKey) {
-            this._offset = Math.max(0, this._offset + delta * 5);
+            // Pan horizontally with shift+wheel
+            this._offset = Math.max(0, this._offset + delta * 8);
         } else {
-            const speed = e.ctrlKey || e.metaKey ? 8 : 3;
+            // Zoom - more aggressive for better UX
+            const speed = e.ctrlKey || e.metaKey ? 15 : 8;
             this._visibleCount = Utils.clamp(this._visibleCount + delta * speed, this._minVisible, this._maxVisible);
         }
         this.draw();
@@ -288,11 +288,11 @@ const Chart = {
         switch (e.key) {
             case '+':
             case '=':
-                this._visibleCount = Math.max(this._minVisible, this._visibleCount - 10);
+                this._visibleCount = Math.max(this._minVisible, this._visibleCount - 15);
                 this.draw();
                 break;
             case '-':
-                this._visibleCount = Math.min(this._maxVisible, this._visibleCount + 10);
+                this._visibleCount = Math.min(this._maxVisible, this._visibleCount + 15);
                 this.draw();
                 break;
             case 'ArrowLeft':
@@ -504,8 +504,9 @@ const Chart = {
         if (this._indicators.ema50) this._drawEMA(ctx, 50, CONFIG.CHART.COLORS.ema50, 1.0);
         if (this._indicators.vwap) this._drawVWAP(ctx);
 
-        // Draw prediction visualization when analysis is active
-        if (State.analysis && this._indicators.tpsl) {
+        // Draw prediction visualization only when explicitly enabled
+        // (prediction visualization is heavy/invasive - off by default)
+        if (State.analysis && this._indicators.prediction) {
             this._drawPrediction(ctx);
         }
 

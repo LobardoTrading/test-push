@@ -129,13 +129,14 @@ const Trading = {
 
         try {
             if (!State.candles || State.candles.length < 21) {
-                Utils.showNotification(' Esperando datos de mercado...', 'warning');
+                Utils.showNotification('Esperando datos de mercado...', 'warning');
                 return;
             }
 
+            // Get direction from indicators
             const signal = Indicators.generateSignal(State.candles);
-
             let direction = signal.direction;
+
             if (direction === 'NEUTRAL') {
                 const closes = State.candles.map(c => c.c);
                 const ema9 = Indicators.ema(closes, 9);
@@ -144,92 +145,81 @@ const Trading = {
 
                 if (ema9 > ema21 && rsiVal < 65) direction = 'LONG';
                 else if (ema9 < ema21 && rsiVal > 35) direction = 'SHORT';
-                else {
-                    Utils.showNotification(' Sin señal clara - Mercado indeciso', 'warning');
-                    direction = 'LONG';
-                }
+                else direction = 'LONG'; // Default
             }
 
             const modeConfig = State.getModeConfig();
+            let result;
 
-       let result = await API.analyze(
-                State.symbol,
-                direction,
-                modeConfig.lev,
-                State.timeframe
-            );
+            // Try API first, fallback to client-side analysis
+            try {
+                result = await API.analyze(
+                    State.symbol,
+                    direction,
+                    modeConfig.lev,
+                    State.timeframe
+                );
+            } catch (apiError) {
+                console.warn('API unavailable, using client-side analysis:', apiError.message);
+
+                // Use client-side analyzer
+                if (typeof ClientAnalyzer !== 'undefined') {
+                    result = ClientAnalyzer.analyze(
+                        State.symbol,
+                        direction,
+                        modeConfig.lev,
+                        State.timeframe
+                    );
+                } else {
+                    throw new Error('No analyzer available');
+                }
+            }
+
+            if (!result) {
+                throw new Error('Empty analysis result');
+            }
 
             result.frontendSignal = signal;
 
-            // SmartEngine: anti flip-flop + consistency
-            if (typeof SmartEngine !== 'undefined') {
-                if (SmartEngine.isOnCooldown(State.symbol)) {
-                    const prev = State.analysis;
-                    if (prev && prev.decision === 'ENTER') {
-                        Utils.showNotification('⏳ Análisis reciente — esperá unos segundos', 'info', 2000);
-                        return prev;
-                    }
-                }
-
-                const override = SmartEngine.shouldOverrideAnalysis(State.symbol, result);
-                if (override) {
-                    result = override;
-                    console.log('🧠 SmartEngine applied consistency filter');
-                }
-
-                // Multi-TF alignment boost/penalty
-                if (result._mtfAlignment) {
-                    const mtf = result._mtfAlignment;
-                    if (mtf.direction === result.direction && mtf.confidence > 50) {
-                        result.confidence = Math.min(95, (result.confidence || 0) + 8);
-                        result.reason = `🔀 MTF alineado (${mtf.quality}). ${result.reason}`;
-                    } else if (mtf.direction !== 'NEUTRAL' && mtf.direction !== result.direction && mtf.confidence > 40) {
-                        result.confidence = Math.max(20, (result.confidence || 0) - 12);
-                        result.reason = `⚠️ MTF en contra (${mtf.direction}). ${result.reason}`;
-                        if (result.confidence < 55 && result.decision === 'ENTER') {
-                            result.decision = 'WAIT';
-                        }
-                    }
-                }
-
+            // Apply SmartEngine if available (simplified)
+            if (typeof SmartEngine !== 'undefined' && SmartEngine.recordAnalysis) {
                 SmartEngine.recordAnalysis(State.symbol, result);
-                SmartEngine.setCooldown(State.symbol);
-
-                const consistency = SmartEngine.getConsistencyInfo(State.symbol);
-                if (consistency) result._consistency = consistency;
             }
 
             State.set('analysis', result);
-            await Analysis.render(result);
 
-            // Save prediction for learning
-            this._savePrediction(result);
+            // Render analysis panel
+            if (typeof Analysis !== 'undefined' && Analysis.render) {
+                await Analysis.render(result);
+            }
 
+            // Setup TP/SL controls
             this.tpSlMode = 'auto';
             this.manualTp = null;
             this.manualSl = null;
             this._renderTpSlControls(result);
             this._renderHypothesisInput(result);
 
+            // Enable/disable buttons based on decision
             if (result.decision === 'ENTER') {
                 this.enableButtons();
                 Utils.showNotification(
-                    `${result.direction === 'LONG' ? '▲' : '▼'} ${result.direction} - ${result.reason}`,
+                    `${result.direction === 'LONG' ? '▲' : '▼'} ${result.direction} - ${result.reason || 'Señal de entrada'}`,
                     'success'
                 );
             } else if (result.decision === 'WAIT') {
                 this.disableButtons();
-                Utils.showNotification(` ${result.reason}`, 'warning');
+                Utils.showNotification(result.reason || 'Esperando mejor entrada', 'warning');
             } else {
                 this.disableButtons();
-                Utils.showNotification(` ${result.reason}`, 'error');
+                Utils.showNotification(result.reason || 'No entrar', 'error');
             }
 
             return result;
 
         } catch (error) {
             console.error('Analysis error:', error);
-            Utils.showNotification(' Error al analizar - Reintentando...', 'error');
+            Utils.showNotification('Error al analizar: ' + error.message, 'error');
             return null;
         } finally {
             State.set('isAnalyzing', false);
